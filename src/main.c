@@ -33,8 +33,98 @@ listedge_t createList(void) {
 }
 
 
+// Return 1 if the list is empty, 0 otherwise
+int isEmpty(listedge_t l) {
+  return (l==NULL) ? 1 : 0;
+}
+
+
+
+// Add an edge at the end of the list
+// Return the new modified list
+listedge_t addElement(listedge_t l, edge_t e) {
+  listedge_t tmp;
+  listedge_t p = calloc(1, sizeof(*p));
+  if (p == NULL) {
+    warningMsg("Error when allocating memory to an edges list.");
+    // Liberer les autres maillons ?
+    return NULL;
+  }
+  p->val = e;
+  p->next = NULL;
+  if (isEmpty(l))
+    return p;
+  else {
+    tmp = l;
+    while (tmp->next != NULL)
+      tmp = tmp->next;
+    tmp->next = p;
+  }
+  return l;
+}
+
+
+
+// Delete the first edge of the list and free the allocated memory
+// Return the new list
+listedge_t deleteElement(listedge_t l) {
+  listedge_t p;
+  if (isEmpty(l)) {   // If the list is already empty
+    warningMsg("List already empty");
+    return NULL;
+  }
+  p = l->next;
+  free(l);      // Free the allocated memory
+  return p;
+}
+
+
+
+
+// Free the memory allocated to the graph
+// Return nothing
+void destructGraph(graph_t* graph) {
+  int i;
+  listedge_t l;
+  int nb = graph->size_vertex;    // Number of nodes
+  for (i = 0; i < nb; i++) {
+    free((graph->data[i]).name);
+    free((graph->data[i]).line);
+    l = (graph->data[i]).edges;
+    while (!isEmpty(l))
+      l = deleteElement(l);
+  }
+  free(graph->data);
+}
+
+
+
+// Print all the data from a graph
+// Return nothing
+void printGraph(graph_t graph) {
+  int i;
+  listedge_t pl;
+  printf("size_vertex = %d \t size_egdes = %d\n", graph.size_vertex, graph.size_edges);
+  printf("NODES : X - Y - line - name \n");
+  for (i = 0; i < graph.size_vertex; i++) {
+    printf("%d %lf %lf %s %s\n", (graph.data[i]).numero, (graph.data[i]).x, (graph.data[i]).y, (graph.data[i]).line, (graph.data[i]).name);
+  }
+  puts("");
+  printf("EDGES : departure - arrival - cost \n");
+  for (i = 0; i < graph.size_vertex; i++) {
+    pl = (graph.data[i]).edges;
+    while (!isEmpty(pl)) {
+      printf("%d %d %lf\n", (pl->val).departure, (pl->val).arrival, (pl->val).cost);
+      pl = pl->next;
+    }
+  }
+  puts("");
+}
+
+
 
 // Allocate memory to the graph, nodes and edges
+// nb is the total number of nodes
 // Return 0 where applicable, 0 otherwise
 int initGraph(graph_t* graph, int nb) {
   int i, j;
@@ -72,36 +162,46 @@ int initGraph(graph_t* graph, int nb) {
 
 
 // Init the graph and fill it with data from datafile
+// Return 0 where applicable, 1 otherwise
 int loadData(graph_t* graph, char* file) {
   int code = 0; int nb_nodes, nb_edges, i, index, dep, arriv;
   double latitude, longitude, cost;
-  char* string, line, name;
-  char* filename = (char*) malloc(16);
-  char* fullname = (char*) malloc(32);
-  char path[16] = "../Graphes/";
-  strcpy(filename, file);
-  strcpy(fullname, path);
-  strcat(fullname, filename);
-  printf("%s\n", fullname);
-  FILE* fp = fopen(fullname, "r");      // LIGNE BUGGEE !!!!!!!!!!!!!!!!!!!!
+  edge_t e;
+  listedge_t l;
+  char string[64];
+  char line[32]; char name[32];
+  char filename[64] = "Graphes/";
+  strcat(filename, file);
+  FILE* fp = fopen(filename, "r");      // Open the file containing the graph
   if (fp == NULL) {
     errorMsg("Error when opening data file.");
     return 1;
   }
-  return 1;
   fscanf(fp, "%d %d", &nb_nodes, &nb_edges);    // Read the number of nodes and edges
   code = initGraph(graph, nb_nodes);
   if (code != 0)
     return 1;
   graph->size_vertex = nb_nodes;
-  graph->size_egdes = nb_edges;
-  fscanf(fp, "%s", string);          // Read the phrase
+  graph->size_edges = nb_edges;
+  fgets(string, 2, fp);   // Read the carriage return at the end of the precedent line
+  fgets(string, 64, fp);          // Read the phrase
   for (i = 0; i < nb_nodes; i++) {
-    fscanf(fp, "%d %lf %lf %s %s", &index, &latitude, &longitude, &line, &name);
+    fscanf(fp, "%d %lf %lf %s %s", &index, &latitude, &longitude, line, name);
+    (graph->data[i]).numero = index;
+    (graph->data[i]).x = latitude;
+    (graph->data[i]).y = longitude;
+    strcpy((graph->data[i]).line, line);
+    strcpy((graph->data[i]).name, name);
   }
-  fscanf(fp, "%s", string);         // Read the phrase
+  fgets(string, 2, fp);   // Read the carriage return at the end of the precedent line
+  fgets(string, 64, fp);         // Read the phrase
+
   for (i = 0; i < nb_edges; i++) {
     fscanf(fp, "%d %d %lf", &dep, &arriv, &cost);
+    e.departure = dep;
+    e.arrival = arriv;
+    e.cost = cost;
+    graph->data[dep].edges = addElement(graph->data[dep].edges, e);
   }
   fclose(fp);
   return 0;
@@ -174,6 +274,9 @@ int main(int argc, char* argv[]) {
   code = loadData(&graph, argv[1]);
   if (code != 0)
    return EXIT_FAILURE;
+  printGraph(graph);
+  destructGraph(&graph);
+
   infoMsg("END");
   return EXIT_SUCCESS;
 }

@@ -8,7 +8,7 @@ Sommets du graphe
 5 0.5	0.35	M1	Faa
 6 0.9	0.35	M1	Gaa
 7 0.1	0.05	M1	Haa
-ArÃªtes du grapheÂ : noeud1 noeud2 valeur
+Aretes du graphe : noeud1 noeud2 valeur
 0 1 5
 0 2 20
 0 3 40

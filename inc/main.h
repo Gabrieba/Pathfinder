@@ -35,7 +35,7 @@ listedge_t edges;     // Edges list which start from this node
 // Type graphe :
 typedef struct {
 int size_vertex;      // Nombre de sommets
-int size_egdes;       // Nombre d’arcs
+int size_edges;       // Nombre d’arcs
 vertex_t* data;       // Tableau des sommets alloue dynamiquement
 } graph_t;
 
@@ -50,3 +50,8 @@ int stringCheck(char* filename, char* arg2);
 int initGraph(graph_t* graph, int nb);
 int loadData(graph_t* graph, char* file);
 listedge_t createList(void);
+int isEmpty(listedge_t l);
+listedge_t addElement(listedge_t l, edge_t e);
+listedge_t deleteElement(listedge_t l);
+void destructGraph(graph_t* graph);
+void printGraph(graph_t graph);
