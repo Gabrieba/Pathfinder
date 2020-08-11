@@ -8,11 +8,29 @@
 #define COLOR_BLUE    36
 
 
+// Index list description (used by A* algorithm)
+typedef struct link_int {
+int val;
+struct link_int* next;
+}* listindex_t;
+
+
 // Edge description
 typedef struct {
 int departure, arrival;  // Index of start and end nodes at the extremities of this edge
 double cost;        // Cost of this edge
 } edge_t;
+
+
+// Node description (used by A* algorithm)
+typedef struct {
+int numero;   // Index of the node
+int parent;   // Index of parent node
+char* name;
+char* line;
+double cost;
+double x,y;
+} node_t;
 
 
 // Edges list description
@@ -22,7 +40,14 @@ struct link_edge * next;
 }* listedge_t;
 
 
-// Node description
+// Nodes list description
+typedef struct link_node {
+node_t val;
+struct link_node * next;
+}* listnode_t;
+
+
+// Node description (used to store data)
 typedef struct {
 int numero;       // Index of node
 char* name;      // Name of node
@@ -34,24 +59,40 @@ listedge_t edges;     // Edges list which start from this node
 
 // Type graphe :
 typedef struct {
-int size_vertex;      // Nombre de sommets
-int size_edges;       // Nombre d’arcs
-vertex_t* data;       // Tableau des sommets alloue dynamiquement
+int size_vertex;      // Number of vertex
+int size_edges;       // Nombre of edges
+vertex_t* data;       // Array of vertex
 } graph_t;
 
 
 
 
-// Fonction prototypes
+// "main.c" function prototypes
 void errorMsg(char* msg);
 void warningMsg(char* msg);
 void infoMsg(char* msg);
-int stringCheck(char* filename, char* arg2);
+int stringCheck(char** tab, int num);
 int initGraph(graph_t* graph, int nb);
 int loadData(graph_t* graph, char* file);
-listedge_t createList(void);
-int isEmpty(listedge_t l);
-listedge_t addElement(listedge_t l, edge_t e);
-listedge_t deleteElement(listedge_t l);
+listedge_t createListEdge(void);
+listnode_t createListNode(void);
+listindex_t createListIndex(void);
+int isEmptyInteger(listindex_t l);
+int isEmptyEdge(listedge_t l);
+int isEmptyNode(listnode_t l);
+listedge_t addEdges(listedge_t l, edge_t e);
+listnode_t addNodes(listnode_t l, node_t n);
+listindex_t addInteger(listindex_t l, int i);
+listnode_t deleteNode(listnode_t l, node_t n);
+listedge_t deleteEdge(listedge_t l);
+listindex_t deleteInteger(listindex_t l);
 void destructGraph(graph_t* graph);
 void printGraph(graph_t graph);
+int presentList(node_t n, listnode_t l);
+
+// "astar.c" function prototypes
+void algoAstar(graph_t graph, int dep, int arriv);
+int loadNode(node_t* n, vertex_t v, listedge_t l, int i_parent, double cost_parent, double lat, double longi);
+int greatCircle(double lat1, double long1, double lat2, double long2);
+void printNodeList(listnode_t l);
+void printEdgeList(listedge_t l);

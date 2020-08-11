@@ -28,13 +28,36 @@ void infoMsg(char* msg) {
 
 
 // Create a list (to contain edges)
-listedge_t createList(void) {
+listedge_t createListEdge(void) {
   return NULL;
 }
 
 
-// Return 1 if the list is empty, 0 otherwise
-int isEmpty(listedge_t l) {
+// Create a list (to contain nodes)
+listnode_t createListNode(void) {
+  return NULL;
+}
+
+
+// Create a list (to contains index)
+listindex_t createListIndex(void) {
+  return NULL;
+}
+
+// Return 1 if the list of integers is empty, 0 otherwise
+int isEmptyInteger(listindex_t l) {
+  return (l==NULL) ? 1 : 0;
+}
+
+
+// Return 1 if the list of edges is empty, 0 otherwise
+int isEmptyEdge(listedge_t l) {
+  return (l==NULL) ? 1 : 0;
+}
+
+
+// Return 1 if the list of nodes is empty, 0 otherwise
+int isEmptyNode(listnode_t l) {
   return (l==NULL) ? 1 : 0;
 }
 
@@ -42,34 +65,78 @@ int isEmpty(listedge_t l) {
 
 // Add an edge at the end of the list
 // Return the new modified list
-listedge_t addElement(listedge_t l, edge_t e) {
+listedge_t addEdges(listedge_t l, edge_t e) {
   listedge_t tmp;
   listedge_t p = calloc(1, sizeof(*p));
   if (p == NULL) {
-    warningMsg("Error when allocating memory to an edges list.");
+    warningMsg("Error when allocating memory to an edge.");
     // Liberer les autres maillons ?
     return NULL;
   }
   p->val = e;
   p->next = NULL;
-  if (isEmpty(l))
+  if (isEmptyEdge(l))
     return p;
-  else {
-    tmp = l;
-    while (tmp->next != NULL)
-      tmp = tmp->next;
-    tmp->next = p;
-  }
+
+  tmp = l;
+  while (tmp->next != NULL)
+    tmp = tmp->next;
+  tmp->next = p;
   return l;
+}
+
+
+
+// Add an integer at the beginning of the list
+// Return the new modified list
+listindex_t addInteger(listindex_t l, int i) {
+  listindex_t p = calloc(1, sizeof(*p));
+  if (isEmptyInteger(p)) {
+    warningMsg("Error when allocating memory to an integer.");
+    return NULL;
+  }
+  p->val = i;
+  p->next = l;
+  return p;
+}
+
+
+
+// Add a node at the beginning of the list
+// Return the new modified list
+listnode_t addNodes(listnode_t l, node_t n) {
+  listnode_t p = calloc(1, sizeof(*p));
+  if (p == NULL) {
+    warningMsg("Error when allocating memory to a node.");
+    // Liberer les autres maillons ?
+    return NULL;
+  }
+  p->val = n;
+  p->next = l;
+  return p;
+}
+
+
+
+// Return 1 if the node 'n' is present in the list of nodes 'l'
+// Return 0 otherwise
+int presentList(node_t n, listnode_t l) {
+  listnode_t p = l;
+  while (!isEmptyNode(p)) {
+    if ((p->val).numero == n.numero)
+      return 1;
+    p = p->next;
+  }
+  return 0;
 }
 
 
 
 // Delete the first edge of the list and free the allocated memory
 // Return the new list
-listedge_t deleteElement(listedge_t l) {
+listedge_t deleteEdge(listedge_t l) {
   listedge_t p;
-  if (isEmpty(l)) {   // If the list is already empty
+  if (isEmptyEdge(l)) {   // If the list is already empty
     warningMsg("List already empty");
     return NULL;
   }
@@ -78,6 +145,54 @@ listedge_t deleteElement(listedge_t l) {
   return p;
 }
 
+
+
+// Delete the first integer of the list and free the allocated memory
+// Return the new list
+listindex_t deleteInteger(listindex_t l) {
+  listindex_t p;
+  if (isEmptyInteger(l)) {   // If the list is already empty
+    warningMsg("List already empty");
+    return NULL;
+  }
+  p = l->next;
+  free(l);      // Free the allocated memory
+  return p;
+}
+
+
+
+// Delete the node 'n' from the list 'l' and free the allocated memory
+// Return the new modified list
+// Return 'l' if 'n' is missing
+listnode_t deleteNode(listnode_t l, node_t n) {
+  listnode_t p = l;
+  listnode_t pp;
+  if (isEmptyNode(p))     // If the list 'l' is already empty
+    return l;
+  if (isEmptyNode(p->next)) {   // If the list 'l' has only one node
+    if ((p->val).numero == n.numero)           // If this single node is the node 'n'
+      return NULL;
+    return l;           // Node 'n' is missing in the list in this case
+  }
+  if ((p->val).numero == n.numero) {    // If node 'n' is the first node of the list
+    pp = p->next;
+    free(p);
+    return pp;
+  }
+  pp = p->next;
+  while (!isEmptyNode(pp)) {    // Otherwise : if 'n' position in the list is greater than first
+    if ((pp->val).numero == n.numero) {    // If the following node is the node 'n'
+      p->next = pp->next;
+      free(pp);      // Free the memory allocated to the node 'n'
+      return l;
+    }
+    p = p->next;
+    pp = pp->next;
+  }
+  puts("huh");
+  return l;     // Node 'n' is missing in the list
+}
 
 
 
@@ -91,8 +206,8 @@ void destructGraph(graph_t* graph) {
     free((graph->data[i]).name);
     free((graph->data[i]).line);
     l = (graph->data[i]).edges;
-    while (!isEmpty(l))
-      l = deleteElement(l);
+    while (!isEmptyEdge(l))
+      l = deleteEdge(l);
   }
   free(graph->data);
 }
@@ -113,7 +228,7 @@ void printGraph(graph_t graph) {
   printf("EDGES : departure - arrival - cost \n");
   for (i = 0; i < graph.size_vertex; i++) {
     pl = (graph.data[i]).edges;
-    while (!isEmpty(pl)) {
+    while (!isEmptyEdge(pl)) {
       printf("%d %d %lf\n", (pl->val).departure, (pl->val).arrival, (pl->val).cost);
       pl = pl->next;
     }
@@ -154,7 +269,7 @@ int initGraph(graph_t* graph, int nb) {
       free(graph->data);      // Free memory  allocated to nodes array
       return 1;
     }
-    (graph->data[i]).edges = createList();    // Create a list of edges
+    (graph->data[i]).edges = createListEdge();    // Create a list of edges
   }
   return 0;
 }
@@ -201,7 +316,7 @@ int loadData(graph_t* graph, char* file) {
     e.departure = dep;
     e.arrival = arriv;
     e.cost = cost;
-    graph->data[dep].edges = addElement(graph->data[dep].edges, e);
+    graph->data[dep].edges = addEdges(graph->data[dep].edges, e);
   }
   fclose(fp);
   return 0;
@@ -211,54 +326,49 @@ int loadData(graph_t* graph, char* file) {
 
 
 // Check if arguments are correct, and return 0
-// Return 0 if an error occured : Memory allocation error, no argument, too much arguments or wrong file name
-int stringCheck(char* arg1, char* arg2) {
-  const char* separator = ".";
-  char cmd[21] = "ls Graphes/ | grep ";     // Unix command to check if the file exists
-  char* string = calloc(sizeof(*string), 29);
-  if (string == NULL) {
-    errorMsg("Memory allocation error : string.");
+// Return 0 if an error occured : not enough arguments, too much arguments, wrong file name, wrong file extension, incorrect argument type
+int stringCheck(char** tab, int num) {
+  int i;
+  const char* separator = ".";      // Separator to isolate the file extension
+  char cmd[64] = "ls Graphes/ | grep ";     // Unix command to check if the file exists
+  char filename[32];
+  if (num < 4) {      // If not enough arguments
+    errorMsg("Not enough arguments. You need to specified the filename containing the graph, the departure index and the arrival index : \n ./path char* int int");
     return 1;
   }
-  char* command = calloc(sizeof(*command), 64);    // Memory allocation for Unix command
-  if (command == NULL) {
-    errorMsg("Memory allocation error : command.");
-    free(string);           // Free allocated memory
+  if (num > 4) {    // If too much arguments
+    errorMsg("Too much arguments. You only need to specified the filename containing the graph, the departure index and the arrival index : \n ./path char* int int");
     return 1;
   }
-  strcpy(command, cmd);
-  if (arg1 == NULL) {
-    errorMsg("No argument specified. You need to give the filename containing the graph.");
-    free(command);            // Free allocated memory
-    free(string);
-    return 1;
-  }
-  strcpy(string, arg1);     // Get again the filename
-  char* strtoken = strtok(string, separator);   // Read filename without extension
+  strcpy(filename, tab[1]);
+  char* strtoken = strtok(filename, separator);   // Read filename without extension
   strtoken = strtok(NULL, separator);   // Get file extension
   if ((strtoken == NULL) || ((strcmp(strtoken, "txt") != 0) && (strcmp(strtoken, "csv") != 0)) ) {    // If there is no file extension, or something else than .tkt or .csv
     errorMsg("Incorrect file extension.");
-    free(command);          // Free allocated memory
-    free(string);
     return 1;
   }
-  strcpy(string, arg1);     // Get again the filename
-  strcat(command, string);    // Add filename to Unix command
-  if (system(command) != 0) {
-    printf("%s : ", arg1);
+  strcat(cmd, tab[1]);
+  if (system(cmd) != 0) {       // Check if the file exists in folder 'Graphes'
+    printf("%s : ", tab[1]);
     errorMsg("File not found");
-    free(command);          // Free allocated memory
-    free(string);
     return 1;
   }
-  if (arg2 != NULL) {   // Check if there is too much arguments
-    warningMsg("Too much argument specified");
-    free(command);      // Free allocated memory
-    free(string);
-    return 1;
+  i = 0;
+  while (tab[2][i] != '\0') {
+    if (tab[2][i] < 48 || tab[2][i] > 57) {   // Check if argument 2 is an integer
+      errorMsg("Arguments 2 and 3 must be integers (departure and arrival node index)");
+      return 1;
+    }
+    i++;
   }
-  free(command);    // Free allocated memory
-  free(string);
+  i = 0;
+  while (tab[3][i] != '\0') {
+    if (tab[3][i] < 48 || tab[3][i] > 57) {     // Check if argument 3 is an integer
+      errorMsg("Arguments 2 and 3 must be integers (departure and arrival node index)");
+      return 1;
+    }
+    i++;
+  }
   return 0;
 }
 
@@ -268,15 +378,25 @@ int stringCheck(char* arg1, char* arg2) {
 int main(int argc, char* argv[]) {
   graph_t graph;
   int code = 0;
-  code = stringCheck(argv[1], argv[2]);
+  int dep, arriv;
+  code = stringCheck(argv, argc);
   if (code != 0)
     return EXIT_FAILURE;
   code = loadData(&graph, argv[1]);
   if (code != 0)
    return EXIT_FAILURE;
-  printGraph(graph);
+  sscanf(argv[2], "%d", &dep);
+  sscanf(argv[3], "%d", &arriv);
+  if (dep > graph.size_vertex || arriv > graph.size_vertex) {
+    errorMsg("Arguments 2 and 3 (departure and arrival node index) cannot be greater than the maximal node index");
+    destructGraph(&graph);
+    return EXIT_FAILURE;
+  }
+  infoMsg("#### A STAR ALGORITHM ####");
+  puts("");
+  algoAstar(graph, dep, arriv);
   destructGraph(&graph);
-
-  infoMsg("END");
+  puts("");
+  infoMsg("END OF A STAR ALGORITHM");
   return EXIT_SUCCESS;
 }
