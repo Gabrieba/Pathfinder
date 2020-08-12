@@ -72,6 +72,7 @@ void errorMsg(char* msg);
 void warningMsg(char* msg);
 void infoMsg(char* msg);
 int stringCheck(char** tab, int num);
+void stringStandardise(char* string);
 int initGraph(graph_t* graph, int nb);
 int loadData(graph_t* graph, char* file);
 listedge_t createListEdge(void);
@@ -92,6 +93,7 @@ int presentList(node_t n, listnode_t l);
 
 // "astar.c" function prototypes
 void algoAstar(graph_t graph, int dep, int arriv);
+void freeMemory(listnode_t l1, listnode_t l2, listindex_t l3);
 int loadNode(node_t* n, vertex_t v, listedge_t l, int i_parent, double cost_parent, double lat, double longi);
 int greatCircle(double lat1, double long1, double lat2, double long2);
 void printNodeList(listnode_t l);

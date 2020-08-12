@@ -1,15 +1,17 @@
 # Pathfinder Algorithm
 
 **Implementation of shortest path search algorithms for robots**
-For the moment, only the A* algorithm has been implemented
+
+For the moment, only the A* algorithm has been implemented.
 
 ## How to use it ?
-- Store your file (.txt or .csv) that contains the graph in the folder "Graphes"
-- **./path <filename> <index_departure> <index_arrival>**
-Where 'index_departure' is the index of departure node, and 'index_arrival' is the index of arrival node
+- Store your file (.txt or .csv) that contains the graph in the folder "Graphes".
+- **./path <_filename_> <index_departure> <index_arrival>**
+
+Where '_index_departure_' is the index of departure node, and '_index_arrival_' is the index of arrival node.
 
 ## Your contribution
-If you want to report a bug or a graph configuration that generates an error, or just to improve it, please feel free.
+If you want to report a bug, or a graph configuration that generates an error, or just to improve it, please feel free.
 
 ## Future improvements
 - Implementation of other pathfinder algorithms : Dijkstra, DFS, BFS, Bellman-Ford

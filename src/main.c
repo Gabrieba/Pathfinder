@@ -249,7 +249,7 @@ int initGraph(graph_t* graph, int nb) {
     return 1;
   }
   for (i = 0; i < nb; i++) {
-    (graph->data[i]).name = calloc(sizeof(char), 32);   // Memory allocated to name
+    (graph->data[i]).name = calloc(sizeof(char), 64);   // Memory allocated to name
     if ((graph->data[i]).name == NULL) {
       errorMsg("Memory allocation error : string name.");
       for (j = 0; j < i; j++)     // Free memory allocated to previous names
@@ -259,7 +259,7 @@ int initGraph(graph_t* graph, int nb) {
     }
   }
   for (i = 0; i < nb; i++) {
-    (graph->data[i]).line = calloc(sizeof(char), 32);   // Memory allocated to line
+    (graph->data[i]).line = calloc(sizeof(char), 16);   // Memory allocated to line
     if ((graph->data[i]).line == NULL) {
       errorMsg("Memory allocation error : string line.");
       for (j = 0; j < nb; j++)     // Free memory allocated to previous names
@@ -284,7 +284,7 @@ int loadData(graph_t* graph, char* file) {
   edge_t e;
   listedge_t l;
   char string[64];
-  char line[32]; char name[32];
+  char line[16]; char name[64];
   char filename[64] = "Graphes/";
   strcat(filename, file);
   FILE* fp = fopen(filename, "r");      // Open the file containing the graph
@@ -301,7 +301,10 @@ int loadData(graph_t* graph, char* file) {
   fgets(string, 2, fp);   // Read the carriage return at the end of the precedent line
   fgets(string, 64, fp);          // Read the phrase
   for (i = 0; i < nb_nodes; i++) {
-    fscanf(fp, "%d %lf %lf %s %s", &index, &latitude, &longitude, line, name);
+    fscanf(fp, "%d %lf %lf %s", &index, &latitude, &longitude, line);
+    fgets(name, 64, fp);
+    stringStandardise(name);     // To delete special caracters
+    stringStandardise(line);     // To delete special caracters
     (graph->data[i]).numero = index;
     (graph->data[i]).x = latitude;
     (graph->data[i]).y = longitude;
@@ -322,6 +325,23 @@ int loadData(graph_t* graph, char* file) {
   return 0;
 }
 
+
+
+// Delete the following caracters from the string chain : ' ', '\t', '\n'
+// Return nothing
+void stringStandardise(char* string) {
+  char buffer[64];
+  int i = 0; int j = 0;
+  strcpy(buffer, string);
+  while (buffer[i] != '\0') {     // While the end of 'string' is not reached
+    if (buffer[i] != ' ' && buffer[i] != '\t' && buffer[i] != '\n') {       // If the string caracter isn't a space, a tabulation or a carriage return
+      string[j] = buffer[i];
+      j++;
+    }
+    i++;
+  }
+  string[j] = '\0';
+}
 
 
 
@@ -392,11 +412,12 @@ int main(int argc, char* argv[]) {
     destructGraph(&graph);
     return EXIT_FAILURE;
   }
-  infoMsg("#### A STAR ALGORITHM ####");
+  infoMsg("#### A-STAR ALGORITHM ####");
   puts("");
   algoAstar(graph, dep, arriv);
+  //printGraph(graph);
   destructGraph(&graph);
   puts("");
-  infoMsg("END OF A STAR ALGORITHM");
+  infoMsg("END OF A-STAR ALGORITHM");
   return EXIT_SUCCESS;
 }

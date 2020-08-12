@@ -40,6 +40,22 @@ int greatCircle(double lat1, double long1, double lat2, double long2) {
 
 
 
+// Free the memory allocated to lists (opened, closed and final)
+// Return nothing
+void freeMemory(listnode_t l1, listnode_t l2, listindex_t l3) {
+  while (!isEmptyInteger(l3))   // Free the memory allocated to index
+    l3 = deleteInteger(l3);
+  while (!isEmptyNode(l2))    // Free the memory allocated to nodes in 'closed' list
+    l2 = deleteNode(l2, l2->val);
+  while (!isEmptyNode(l1))     // Free the memory allocated to nodes in 'opened' list
+    l1 = deleteNode(l1, l1->val);
+  free(l1);
+  free(l2);
+  free(l3);
+}
+
+
+
 // Load data from a vertex_t variable (v) to a node_t variable (n)
 // Need some extra data from the parent node (its index 'i_parent' and its cost 'cost_parent') and from the arrival node ('lat' and 'long')
 // Return 1 if an error occured, 0 otherwise
@@ -87,7 +103,7 @@ void algoAstar(graph_t graph, int dep, int arriv) {
     errorMsg("Error when allocating memory to name of current node");
     return;
   }
-  current_node.line = calloc(sizeof(*(current_node.line)), 64);
+  current_node.line = calloc(sizeof(*(current_node.line)), 16);
   if (current_node.line == NULL) {
     errorMsg("Error when allocating memory to line of current node");
     free(current_node.name);
@@ -100,7 +116,7 @@ void algoAstar(graph_t graph, int dep, int arriv) {
     free(current_node.line);
     return;
   }
-  n.line = calloc(sizeof(*(n.line)), 64);
+  n.line = calloc(sizeof(*(n.line)), 16);
   if (n.line == NULL) {
     errorMsg("Error when allocating memory to line of neighbour node");
     free(current_node.name);
@@ -117,8 +133,6 @@ void algoAstar(graph_t graph, int dep, int arriv) {
     return;
   }
   opened = addNodes(opened, current_node);
-  // printf("OPENED à compteur = %d\n", compteur);
-  // printNodeList(opened);
 
   while (!isEmptyNode(opened)) {
     p = opened;
@@ -134,8 +148,6 @@ void algoAstar(graph_t graph, int dep, int arriv) {
 
     current_node = (pp->val);   // Update the current node
     opened = deleteNode(opened, current_node);    // Delete the current node from the opened list
-    // printf("OPENED à compteur = %d (suppression de n°%d)\n", compteur, current_node.numero);
-    // printNodeList(opened);
 
     if (current_node.numero == arriv) {   // If the current node is the final node
       closed = addNodes(closed, current_node);     // Add the last node to the closed list
@@ -150,7 +162,13 @@ void algoAstar(graph_t graph, int dep, int arriv) {
       final = addInteger(final, dep);
       f = final;
       while (!isEmptyInteger(f)) {
-        printf("%d  ", f->val);
+        printf("%d \t %s", f->val, (graph.data[f->val]).name);
+        num = strlen((graph.data[f->val]).name);
+        while(num < 41) {
+          num = num + 8;
+          printf("\t");
+        }
+        printf("%s\n", (graph.data[f->val]).line);
         f = f->next;
       }
       puts("");
@@ -158,9 +176,7 @@ void algoAstar(graph_t graph, int dep, int arriv) {
       free(current_node.line);
       free(n.name);
       free(n.line);
-      f = final;
-      while (!isEmptyInteger(f))
-        f = deleteInteger(f);
+      freeMemory(opened, closed, final);
       return;
     }
 
@@ -172,6 +188,7 @@ void algoAstar(graph_t graph, int dep, int arriv) {
         free(current_node.line);
         free(n.name);
         free(n.line);
+        freeMemory(opened, closed, final);
         return;
       }
 
@@ -194,17 +211,14 @@ void algoAstar(graph_t graph, int dep, int arriv) {
           opened = addNodes(opened, n);           // Add the new neighbour node 'n' with the new cost value
         }
       }
-      // printf("OPENED à compteur = %d\n", compteur);
-      // printNodeList(opened);
       l = l->next;    // Goes through the list of edges to get all the neighbour nodes
     }
     closed = addNodes(closed, current_node);    // Add the current node to the closed list
-    // printf("CLOSED à compteur = %d\n", compteur);
-    // printNodeList(closed);
   }
   warningMsg("There is apparently no possible path...");
   free(current_node.name);
   free(current_node.line);
   free(n.name);
   free(n.line);
+  freeMemory(opened, closed, final);
 }
