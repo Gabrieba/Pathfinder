@@ -168,9 +168,9 @@ listindex_t deleteInteger(listindex_t l) {
 listnode_t deleteNode(listnode_t l, node_t n) {
   listnode_t p = l;
   listnode_t pp;
-  if (isEmptyNode(p))     // If the list 'l' is already empty
+  if (isEmptyNode(p))           // If the list 'l' is already empty
     return l;
-  if (isEmptyNode(p->next)) {   // If the list 'l' has only one node
+  if (isEmptyNode(p->next)) {           // If the list 'l' has only one node
     if ((p->val).numero == n.numero)           // If this single node is the node 'n'
       return NULL;
     return l;           // Node 'n' is missing in the list in this case
@@ -181,16 +181,15 @@ listnode_t deleteNode(listnode_t l, node_t n) {
     return pp;
   }
   pp = p->next;
-  while (!isEmptyNode(pp)) {    // Otherwise : if 'n' position in the list is greater than first
+  while (!isEmptyNode(pp)) {            // Otherwise : if 'n' position in the list is greater than the first position
     if ((pp->val).numero == n.numero) {    // If the following node is the node 'n'
       p->next = pp->next;
-      free(pp);      // Free the memory allocated to the node 'n'
+      free(pp);                 // Free the memory allocated to the node 'n'
       return l;
     }
     p = p->next;
     pp = pp->next;
   }
-  puts("huh");
   return l;     // Node 'n' is missing in the list
 }
 
@@ -412,12 +411,13 @@ int main(int argc, char* argv[]) {
     destructGraph(&graph);
     return EXIT_FAILURE;
   }
-  infoMsg("#### A-STAR ALGORITHM ####");
+  infoMsg("########## PATHFINDER ALGORITHM ##########");
   puts("");
-  algoAstar(graph, dep, arriv);
+//  algoAstar(graph, dep, arriv);
+  algoDikstra(graph, dep, arriv);
   //printGraph(graph);
   destructGraph(&graph);
   puts("");
-  infoMsg("END OF A-STAR ALGORITHM");
+  infoMsg("########## END OF PATHFINDER ALGORITHM ##########");
   return EXIT_SUCCESS;
 }

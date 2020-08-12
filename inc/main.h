@@ -92,9 +92,15 @@ void printGraph(graph_t graph);
 int presentList(node_t n, listnode_t l);
 
 // "astar.c" function prototypes
+void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(node_t*, listedge_t, int, double, double, double));
 void algoAstar(graph_t graph, int dep, int arriv);
-void freeMemory(listnode_t l1, listnode_t l2, listindex_t l3);
-int loadNode(node_t* n, vertex_t v, listedge_t l, int i_parent, double cost_parent, double lat, double longi);
+void evaluationAStar(node_t* n, listedge_t l, int i_parent, double cost_parent, double lat, double longi);
+void algoDikstra(graph_t graph, int dep, int arriv);
+void evaluationDikstra(node_t* n, listedge_t l, int i_parent, double cost_parent, double lat, double longi);
+void freeMemoryList(listnode_t l1, listnode_t l2, listindex_t l3);
+void freeMemoryString(node_t n1, node_t n2);
+void printPath(listindex_t l, graph_t graph);
+void loadNode(node_t* n, vertex_t v, int i_parent);
 int greatCircle(double lat1, double long1, double lat2, double long2);
 void printNodeList(listnode_t l);
 void printEdgeList(listedge_t l);
