@@ -346,47 +346,48 @@ void stringStandardise(char* string) {
 
 // Check if arguments are correct, and return 0
 // Return 0 if an error occured : not enough arguments, too much arguments, wrong file name, wrong file extension, incorrect argument type
-int stringCheck(char** tab, int num) {
+int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex) {
   int i;
   const char* separator = ".";      // Separator to isolate the file extension
   char cmd[64] = "ls Graphes/ | grep ";     // Unix command to check if the file exists
-  char filename[32];
-  if (num < 4) {      // If not enough arguments
-    errorMsg("Not enough arguments. You need to specified the filename containing the graph, the departure index and the arrival index : \n ./path char* int int");
-    return 1;
-  }
-  if (num > 4) {    // If too much arguments
-    errorMsg("Too much arguments. You only need to specified the filename containing the graph, the departure index and the arrival index : \n ./path char* int int");
-    return 1;
-  }
-  strcpy(filename, tab[1]);
-  char* strtoken = strtok(filename, separator);   // Read filename without extension
+  char string[32];
+
+  strcpy(string, filename);
+  char* strtoken = strtok(string, separator);   // Read filename without extension
   strtoken = strtok(NULL, separator);   // Get file extension
   if ((strtoken == NULL) || ((strcmp(strtoken, "txt") != 0) && (strcmp(strtoken, "csv") != 0)) ) {    // If there is no file extension, or something else than .tkt or .csv
     errorMsg("Incorrect file extension.");
     return 1;
   }
-  strcat(cmd, tab[1]);
+  strcat(cmd, filename);
   if (system(cmd) != 0) {       // Check if the file exists in folder 'Graphes'
-    printf("%s : ", tab[1]);
+    printf("%s : ", filename);
     errorMsg("File not found");
     return 1;
   }
   i = 0;
-  while (tab[2][i] != '\0') {
-    if (tab[2][i] < 48 || tab[2][i] > 57) {   // Check if argument 2 is an integer
+  while (departureindex[i] != '\0') {
+    if (departureindex[i] < 48 || departureindex[i] > 57) {   // Check if argument 2 is an integer
       errorMsg("Arguments 2 and 3 must be integers (departure and arrival node index)");
       return 1;
     }
     i++;
   }
   i = 0;
-  while (tab[3][i] != '\0') {
-    if (tab[3][i] < 48 || tab[3][i] > 57) {     // Check if argument 3 is an integer
+  while (arrivalindex[i] != '\0') {
+    if (arrivalindex[i] < 48 || arrivalindex[i] > 57) {     // Check if argument 3 is an integer
       errorMsg("Arguments 2 and 3 must be integers (departure and arrival node index)");
       return 1;
     }
     i++;
+  }
+  if (departurename[0] == '\0' && departureindex[0] == '\0') {
+    errorMsg("You must specify a name or an index for the departure node");
+    return 1;
+  }
+  if (arrivalname[0] == '\0' && arrivalindex[0] == '\0') {
+    errorMsg("You must specify a name or an index for the arrival node");
+    return 1;
   }
   return 0;
 }
@@ -397,26 +398,115 @@ int stringCheck(char** tab, int num) {
 int main(int argc, char* argv[]) {
   graph_t graph;
   int code = 0;
-  int dep, arriv;
-  code = stringCheck(argv, argc);
-  if (code != 0)
-    return EXIT_FAILURE;
-  code = loadData(&graph, argv[1]);
+  int dep, arriv, i, bit;
+
+  char* filename = calloc(32, sizeof(char));
+  if (filename == NULL) {
+    errorMsg("Error when allocating memory to filename");
+    exit(EXIT_FAILURE);
+  }
+  char* departurename = calloc(32, sizeof(char));
+  if (departurename == NULL) {
+    errorMsg("Error when allocating memory to departurename");
+    free(filename);
+    exit(EXIT_FAILURE);
+  }
+  char* arrivalname = calloc(32, sizeof(char));
+  if (arrivalname == NULL) {
+    errorMsg("Error when allocating memory to arrivalname");
+    free(filename);
+    free(departurename);
+    exit(EXIT_FAILURE);
+  }
+  char* departureindex = calloc(8, sizeof(char));
+  if (departureindex == NULL) {
+    errorMsg("Error when allocating memory to departureindex");
+    free(filename);
+    free(departurename);
+    free(arrivalname);
+    exit(EXIT_FAILURE);
+  }
+  char* arrivalindex = calloc(8, sizeof(char));
+  if (arrivalindex == NULL) {
+    errorMsg("Error when allocating memory to arrivalindex");
+    free(filename);
+    free(departurename);
+    free(arrivalname);
+    free(departureindex);
+    exit(EXIT_FAILURE);
+  }
+
+  if (argc > 1) {
+    warningMsg("You don't need to specify arguments.");
+    exit(EXIT_FAILURE);
+  }
+  code = dataForm(filename, departurename, arrivalname, departureindex, arrivalindex);
   if (code != 0)
    return EXIT_FAILURE;
-  sscanf(argv[2], "%d", &dep);
-  sscanf(argv[3], "%d", &arriv);
+  code = dataCheck(filename, departurename, arrivalname, departureindex, arrivalindex);
+  if (code != 0)
+    return EXIT_FAILURE;
+  code = loadData(&graph, filename);
+  if (code != 0)
+   return EXIT_FAILURE;
+
+  if (departureindex[0] != '\0')
+    sscanf(departureindex, "%d", &dep);
+  else {
+    for (i = 0; i < graph.size_vertex; i++) {
+      if (strcmp(graph.data[i].name, departurename) == 0) {
+        bit = 1;
+        break;
+      }
+    }
+    if (!bit) {
+      printf("%s : ", departurename);
+      warningMsg("this node name doesn't exist");
+      destructGraph(&graph);
+      exit(EXIT_FAILURE);
+    }
+    else
+      dep = i;
+  }
+  bit = 0;
+  if (arrivalindex[0] != '\0')
+    sscanf(arrivalindex, "%d", &arriv);
+  else {
+    for (i = 0; i < graph.size_vertex; i++) {
+      if (strcmp(graph.data[i].name, arrivalname) == 0) {
+        bit = 1;
+        break;
+      }
+    }
+    if (!bit) {
+      printf("%s : ", arrivalname);
+      warningMsg("this node name doesn't exist");
+      destructGraph(&graph);
+      exit(EXIT_FAILURE);
+    }
+    else
+      arriv = i;
+  }
+
   if (dep > graph.size_vertex || arriv > graph.size_vertex) {
-    errorMsg("Arguments 2 and 3 (departure and arrival node index) cannot be greater than the maximal node index");
+    errorMsg("Departure and arrival node indexes cannot be greater than the maximal node index");
     destructGraph(&graph);
     return EXIT_FAILURE;
   }
+
   infoMsg("########## PATHFINDER ALGORITHM ##########");
   puts("");
-//  algoAstar(graph, dep, arriv);
+  printf("dep=%d, arriv=%d, filename=%s\n", dep, arriv, filename);
+  //algoAstar(graph, dep, arriv);
   algoDikstra(graph, dep, arriv);
   //printGraph(graph);
+
   destructGraph(&graph);
+  free(filename);
+  free(departurename);
+  free(departureindex);
+  free(arrivalname);
+  free(arrivalindex);
   puts("");
   infoMsg("########## END OF PATHFINDER ALGORITHM ##########");
   return EXIT_SUCCESS;

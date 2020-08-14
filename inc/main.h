@@ -7,6 +7,18 @@
 #define COLOR_YELLOW  33
 #define COLOR_BLUE    36
 
+// SDL window dimensions
+#define HEIGHT 590     // SDL window height
+#define WIDTH 850      // SSL window width
+
+
+// Data user storage (used by dataForm)
+typedef struct {
+int code;
+int control;
+char string;
+} datauser_t;
+
 
 // Index list description (used by A* algorithm)
 typedef struct link_int {
@@ -71,7 +83,7 @@ vertex_t* data;       // Array of vertex
 void errorMsg(char* msg);
 void warningMsg(char* msg);
 void infoMsg(char* msg);
-int stringCheck(char** tab, int num);
+int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex);
 void stringStandardise(char* string);
 int initGraph(graph_t* graph, int nb);
 int loadData(graph_t* graph, char* file);
@@ -91,6 +103,7 @@ void destructGraph(graph_t* graph);
 void printGraph(graph_t graph);
 int presentList(node_t n, listnode_t l);
 
+
 // "astar.c" function prototypes
 void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(node_t*, listedge_t, int, double, double, double));
 void algoAstar(graph_t graph, int dep, int arriv);
@@ -104,3 +117,8 @@ void loadNode(node_t* n, vertex_t v, int i_parent);
 int greatCircle(double lat1, double long1, double lat2, double long2);
 void printNodeList(listnode_t l);
 void printEdgeList(listedge_t l);
+
+
+// "display.c" function prototypes
+void processEvent(datauser_t* data);
+int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex);
