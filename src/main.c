@@ -213,6 +213,22 @@ void destructGraph(graph_t* graph) {
 
 
 
+// Free the memory allocated to strings used to retrieve user data
+// Return nothing
+void destructStringData(char* filename, char* departureindex, char* arrivalindex, char* departurename, char* arrivalname) {
+  if (filename != NULL)
+    free(filename);
+  if (departureindex != NULL)
+    free(departureindex);
+  if (arrivalindex != NULL)
+    free(arrivalindex);
+  if (departurename != NULL)
+    free(departurename);
+  if (arrivalname != NULL)
+    free(arrivalname);
+}
+
+
 // Print all the data from a graph
 // Return nothing
 void printGraph(graph_t graph) {
@@ -346,12 +362,22 @@ void stringStandardise(char* string) {
 
 // Check if arguments are correct, and return 0
 // Return 0 if an error occured : not enough arguments, too much arguments, wrong file name, wrong file extension, incorrect argument type
-int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex) {
+int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int algo, int heuristic) {
   int i;
   const char* separator = ".";      // Separator to isolate the file extension
   char cmd[64] = "ls Graphes/ | grep ";     // Unix command to check if the file exists
   char string[32];
 
+  if (!algo) {
+    errorMsg("You didn't choose an algorithm");
+    return 1;
+  }
+  if (algo != DIJKSTRA) {
+    if (!heuristic) {
+      errorMsg("You didn't choose a heuristic function");
+      return 1;
+    }
+  }
   strcpy(string, filename);
   char* strtoken = strtok(string, separator);   // Read filename without extension
   strtoken = strtok(NULL, separator);   // Get file extension
@@ -395,10 +421,11 @@ int dataCheck(char* filename, char* departurename, char* arrivalname, char* depa
 
 
 // Main code + error handler
+// Return EXIT_SUCCESS in case of succes, EXIT_FAILURE otherwise
 int main(int argc, char* argv[]) {
   graph_t graph;
   int code = 0;
-  int dep, arriv, i, bit;
+  int dep, arriv, i, bit, algo, heuristic;
 
   char* filename = calloc(32, sizeof(char));
   if (filename == NULL) {
@@ -414,41 +441,42 @@ int main(int argc, char* argv[]) {
   char* arrivalname = calloc(32, sizeof(char));
   if (arrivalname == NULL) {
     errorMsg("Error when allocating memory to arrivalname");
-    free(filename);
-    free(departurename);
+    destructStringData(filename, NULL, NULL, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
   char* departureindex = calloc(8, sizeof(char));
   if (departureindex == NULL) {
     errorMsg("Error when allocating memory to departureindex");
-    free(filename);
-    free(departurename);
-    free(arrivalname);
+    destructStringData(filename, departureindex, NULL, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
   char* arrivalindex = calloc(8, sizeof(char));
   if (arrivalindex == NULL) {
     errorMsg("Error when allocating memory to arrivalindex");
-    free(filename);
-    free(departurename);
-    free(arrivalname);
-    free(departureindex);
+    destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
 
   if (argc > 1) {
-    warningMsg("You don't need to specify arguments.");
+    warningMsg("You don't need to specify arguments after './path'.");
+    destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
-  code = dataForm(filename, departurename, arrivalname, departureindex, arrivalindex);
-  if (code != 0)
-   return EXIT_FAILURE;
-  code = dataCheck(filename, departurename, arrivalname, departureindex, arrivalindex);
-  if (code != 0)
-    return EXIT_FAILURE;
+  code = dataForm(filename, departurename, arrivalname, departureindex, arrivalindex, &algo, &heuristic);
+  if (code != 0) {
+    destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
+    exit(EXIT_FAILURE);
+  }
+  code = dataCheck(filename, departurename, arrivalname, departureindex, arrivalindex, algo, heuristic);
+  if (code != 0) {
+    destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
+    exit(EXIT_FAILURE);
+  }
   code = loadData(&graph, filename);
-  if (code != 0)
-   return EXIT_FAILURE;
+  if (code != 0) {
+    destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
+    exit(EXIT_FAILURE);
+  }
 
   if (departureindex[0] != '\0')
     sscanf(departureindex, "%d", &dep);
@@ -463,6 +491,7 @@ int main(int argc, char* argv[]) {
       printf("%s : ", departurename);
       warningMsg("this node name doesn't exist");
       destructGraph(&graph);
+      destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
       exit(EXIT_FAILURE);
     }
     else
@@ -482,6 +511,7 @@ int main(int argc, char* argv[]) {
       printf("%s : ", arrivalname);
       warningMsg("this node name doesn't exist");
       destructGraph(&graph);
+      destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
       exit(EXIT_FAILURE);
     }
     else
@@ -491,7 +521,8 @@ int main(int argc, char* argv[]) {
   if (dep > graph.size_vertex || arriv > graph.size_vertex) {
     errorMsg("Departure and arrival node indexes cannot be greater than the maximal node index");
     destructGraph(&graph);
-    return EXIT_FAILURE;
+    destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
+    exit(EXIT_FAILURE);
   }
 
   infoMsg("########## PATHFINDER ALGORITHM ##########");
@@ -502,12 +533,8 @@ int main(int argc, char* argv[]) {
   //printGraph(graph);
 
   destructGraph(&graph);
-  free(filename);
-  free(departurename);
-  free(departureindex);
-  free(arrivalname);
-  free(arrivalindex);
+  destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
   puts("");
   infoMsg("########## END OF PATHFINDER ALGORITHM ##########");
-  return EXIT_SUCCESS;
+  exit(EXIT_SUCCESS);
 }

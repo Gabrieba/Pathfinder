@@ -16,6 +16,10 @@ Then, you can specify the filename, the desired algorithm, the desired heuristic
 If you want to report a bug, or a graph configuration that generates an error, or just to improve it, please feel free.
 
 ## Future improvements
+- Display of error messages directly in the dataform window, instead of leaving the window
+- Implementation of characters deleting in a text field
+- Implementation of text editing cursor
+- Real-time characters display in the text fields
 - Implementation of other pathfinder algorithms : DFS, BFS, Bellman-Ford, ...
 - Implementation of other heuristic functions : Manhattan, Euclidean, Octile and Chebyshev
 - Comparison of algorithm execution times

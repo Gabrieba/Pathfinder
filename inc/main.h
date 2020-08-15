@@ -11,6 +11,16 @@
 #define HEIGHT 590     // SDL window height
 #define WIDTH 850      // SSL window width
 
+// Data definitions for dataForm
+#define ASTAR 1
+#define DIJKSTRA 2
+#define BFS 3
+#define DFS 4
+#define CIRCLE 5
+#define MANHATTAN 6
+#define EUCLIDEAN 7
+#define OCTILE 8
+#define CHEBYSHEV 9
 
 // Data user storage (used by dataForm)
 typedef struct {
@@ -83,7 +93,7 @@ vertex_t* data;       // Array of vertex
 void errorMsg(char* msg);
 void warningMsg(char* msg);
 void infoMsg(char* msg);
-int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex);
+int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int algo, int heuristic);
 void stringStandardise(char* string);
 int initGraph(graph_t* graph, int nb);
 int loadData(graph_t* graph, char* file);
@@ -100,6 +110,7 @@ listnode_t deleteNode(listnode_t l, node_t n);
 listedge_t deleteEdge(listedge_t l);
 listindex_t deleteInteger(listindex_t l);
 void destructGraph(graph_t* graph);
+void destructStringData(char* filename, char* departureindex, char* arrivalindex, char* departurename, char* arrivalname);
 void printGraph(graph_t graph);
 int presentList(node_t n, listnode_t l);
 
@@ -121,4 +132,4 @@ void printEdgeList(listedge_t l);
 
 // "display.c" function prototypes
 void processEvent(datauser_t* data);
-int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex);
+int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int* algo, int* heuristic);

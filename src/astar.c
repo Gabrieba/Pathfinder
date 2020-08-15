@@ -132,7 +132,7 @@ void loadNode(node_t* n, vertex_t v, int i_parent) {
 
 
 
-// Compute the shortest path in the graph, between vertex 'dep' and 'arriv'
+// Compute the shortest path in the graph, between vertex 'dep' and 'arriv' according to A Star and Dijkstra algorithm
 // Print the path in the shell
 // Return nothing
 void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(node_t*, listedge_t, int, double, double, double)) {
