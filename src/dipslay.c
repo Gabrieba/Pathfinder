@@ -187,17 +187,28 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   int i;
   datauser_t data;          // To store user data
   SDL_Surface* screen = NULL;         // The global SDL screen
-  SDL_Surface* text[22] = {NULL};       // SDL surfaces for textes
+  SDL_Surface* text[27] = {NULL};       // SDL surfaces for textes
   object_t imgcase[11];               // SDL surfaces for images
   for (i = 0; i < 11; i++) {
     imgcase[i].surface = NULL;
   }
   SDL_Surface* separator[21] = {NULL};    // SDL surfaces for separators
-  SDL_Rect position;                     // SDL surfaces position in the window
+  SDL_Rect position, positionfile, positionindexdep, positionindexarriv, positionnamedep, positionnamearriv;                     // SDL surfaces position in the window
+  positionfile.x = 259;
+  positionfile.y = 394;
+  positionindexdep.x = 179;
+  positionindexdep.y = 275;
+  positionindexarriv.x = 179;
+  positionindexarriv.y = 325;
+  positionnamedep.x = 362;
+  positionnamedep.y = 275;
+  positionnamearriv.x = 362;
+  positionnamearriv.y = 325;
   TTF_Font* police1 = NULL;             // Police for the main title
   TTF_Font* police2 = NULL;           // Police for paragraph titles
   TTF_Font* police3 = NULL;             // Police for standard text
   SDL_Color white = {255, 255, 255};        // Definition of white color
+  SDL_Color green = {194, 247, 50};         // Definition of green color
   if (SDL_Init(SDL_INIT_VIDEO) == -1) {                         // initialisation of SDL
     fprintf(stderr, "SDL initialisation error : %s\n", SDL_GetError());
     return -1;
@@ -454,48 +465,71 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
       switch(data.code) {                 // To determine which text field
         case 1:                               // 'filename' text field
           sprintf(filename, "%s%c", filename, data.string);       // Concatenate the character at the end of the word 'filename'
+          text[22] = TTF_RenderText_Blended(police3, filename, green);
+          SDL_BlitSurface(text[22], NULL, screen, &positionfile);
           break;
         case 2:                               // 'departureindex' text field
           sprintf(departureindex, "%s%c", departureindex, data.string);       // Concatenate the character at the end of the word 'departureindex'
+          text[23] = TTF_RenderText_Blended(police3, departureindex, green);
+          SDL_BlitSurface(text[23], NULL, screen, &positionindexdep);
           break;
         case 3:                                   // 'arrivalindex' text field
           sprintf(arrivalindex, "%s%c", arrivalindex, data.string);       // Concatenate the character at the end of the word 'arrivalindex'
+          text[24] = TTF_RenderText_Blended(police3, arrivalindex, green);
+          SDL_BlitSurface(text[24], NULL, screen, &positionindexarriv);
           break;
         case 4:                                 // 'departurename' text field
           sprintf(departurename, "%s%c", departurename, data.string);           // Concatenate the character at the end of the word 'departurename'
+          text[25] = TTF_RenderText_Blended(police3, departurename, green);
+          SDL_BlitSurface(text[25], NULL, screen, &positionnamedep);
           break;
         case 5:                                 // 'arrivalname' text field
           sprintf(arrivalname, "%s%c", arrivalname, data.string);           // Concatenate the character at the end of the word 'arrivalname'
+          text[26] = TTF_RenderText_Blended(police3, arrivalname, green);
+          SDL_BlitSurface(text[26], NULL, screen, &positionnamearriv);
           break;
         default:
           errorMsg("Should not be here");         // Because the user enters a character but no text field is selected
           free(data.accent);
           return -1;
       }
+    SDL_Flip(screen);         // Update the whole SDL window
     data.string = '\0';         // Reset data.string
     }
+
     else if ((data.accent)[0] != '\0') {          // A special character has been chosen
       switch(data.code) {                 // To determine which text field
         case 1:                               // 'filename' text field
           sprintf(filename, "%s%s", filename, data.accent);       // Concatenate the character at the end of the word 'filename'
+          text[22] = TTF_RenderText_Blended(police3, filename, green);
+          SDL_BlitSurface(text[22], NULL, screen, &positionfile);
           break;
         case 2:                               // 'departureindex' text field
           sprintf(departureindex, "%s%s", departureindex, data.accent);       // Concatenate the character at the end of the word 'departureindex'
+          text[23] = TTF_RenderText_Blended(police3, departureindex, green);
+          SDL_BlitSurface(text[23], NULL, screen, &positionindexdep);
           break;
         case 3:                                   // 'arrivalindex' text field
           sprintf(arrivalindex, "%s%s", arrivalindex, data.accent);       // Concatenate the character at the end of the word 'arrivalindex'
+          text[24] = TTF_RenderText_Blended(police3, arrivalindex, green);
+          SDL_BlitSurface(text[24], NULL, screen, &positionindexarriv);
           break;
         case 4:                                 // 'departurename' text field
           sprintf(departurename, "%s%s", departurename, data.accent);           // Concatenate the character at the end of the word 'departurename'
+          text[25] = TTF_RenderText_Blended(police3, departurename, green);
+          SDL_BlitSurface(text[25], NULL, screen, &positionnamedep);
           break;
         case 5:                                 // 'arrivalname' text field
           sprintf(arrivalname, "%s%s", arrivalname, data.accent);           // Concatenate the character at the end of the word 'arrivalname'
+          text[26] = TTF_RenderText_Blended(police3, arrivalname, green);
+          SDL_BlitSurface(text[26], NULL, screen, &positionnamearriv);
           break;
         default:
           errorMsg("Should not be here");         // Because the user enters a character but no text field has been selected
           free(data.accent);
           return -1;
       }
+      SDL_Flip(screen);         // Update the whole SDL window
       data.accent[0] = '\0';      // Reset data.accent
     }
     else if (data.code > 5 && data.code < 10) {      // Else if an algorithm box has been checked
@@ -544,7 +578,7 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
       updateCasesHeur(imgcase, screen, (data.code)-6);
     }
   }
-  for (i = 0; i < 22; i++)      // Free memory allocated to text SDL surfaces
+  for (i = 0; i < 27; i++)      // Free memory allocated to text SDL surfaces
     SDL_FreeSurface(text[i]);
   for (i = 0; i < 11; i++)        // Free memory allocated to image SDL surfaces
     SDL_FreeSurface(imgcase[i].surface);
