@@ -27,174 +27,6 @@ void infoMsg(char* msg) {
 
 
 
-// Create a list (to contain edges)
-listedge_t createListEdge(void) {
-  return NULL;
-}
-
-
-// Create a list (to contain nodes)
-listnode_t createListNode(void) {
-  return NULL;
-}
-
-
-// Create a list (to contains index)
-listindex_t createListIndex(void) {
-  return NULL;
-}
-
-// Return 1 if the list of integers is empty, 0 otherwise
-int isEmptyInteger(listindex_t l) {
-  return (l==NULL) ? 1 : 0;
-}
-
-
-// Return 1 if the list of edges is empty, 0 otherwise
-int isEmptyEdge(listedge_t l) {
-  return (l==NULL) ? 1 : 0;
-}
-
-
-// Return 1 if the list of nodes is empty, 0 otherwise
-int isEmptyNode(listnode_t l) {
-  return (l==NULL) ? 1 : 0;
-}
-
-
-
-// Add an edge at the end of the list
-// Return the new modified list
-listedge_t addEdges(listedge_t l, edge_t e) {
-  listedge_t tmp;
-  listedge_t p = calloc(1, sizeof(*p));
-  if (p == NULL) {
-    warningMsg("Error when allocating memory to an edge.");
-    // Liberer les autres maillons ?
-    return NULL;
-  }
-  p->val = e;
-  p->next = NULL;
-  if (isEmptyEdge(l))
-    return p;
-
-  tmp = l;
-  while (tmp->next != NULL)
-    tmp = tmp->next;
-  tmp->next = p;
-  return l;
-}
-
-
-
-// Add an integer at the beginning of the list
-// Return the new modified list
-listindex_t addInteger(listindex_t l, int i) {
-  listindex_t p = calloc(1, sizeof(*p));
-  if (isEmptyInteger(p)) {
-    warningMsg("Error when allocating memory to an integer.");
-    return NULL;
-  }
-  p->val = i;
-  p->next = l;
-  return p;
-}
-
-
-
-// Add a node at the beginning of the list
-// Return the new modified list
-listnode_t addNodes(listnode_t l, node_t n) {
-  listnode_t p = calloc(1, sizeof(*p));
-  if (p == NULL) {
-    warningMsg("Error when allocating memory to a node.");
-    // Liberer les autres maillons ?
-    return NULL;
-  }
-  p->val = n;
-  p->next = l;
-  return p;
-}
-
-
-
-// Return 1 if the node 'n' is present in the list of nodes 'l'
-// Return 0 otherwise
-int presentList(node_t n, listnode_t l) {
-  listnode_t p = l;
-  while (!isEmptyNode(p)) {
-    if ((p->val).numero == n.numero)
-      return 1;
-    p = p->next;
-  }
-  return 0;
-}
-
-
-
-// Delete the first edge of the list and free the allocated memory
-// Return the new list
-listedge_t deleteEdge(listedge_t l) {
-  listedge_t p;
-  if (isEmptyEdge(l)) {   // If the list is already empty
-    warningMsg("List already empty");
-    return NULL;
-  }
-  p = l->next;
-  free(l);      // Free the allocated memory
-  return p;
-}
-
-
-
-// Delete the first integer of the list and free the allocated memory
-// Return the new list
-listindex_t deleteInteger(listindex_t l) {
-  listindex_t p;
-  if (isEmptyInteger(l)) {   // If the list is already empty
-    warningMsg("List already empty");
-    return NULL;
-  }
-  p = l->next;
-  free(l);      // Free the allocated memory
-  return p;
-}
-
-
-
-// Delete the node 'n' from the list 'l' and free the allocated memory
-// Return the new modified list
-// Return 'l' if 'n' is missing
-listnode_t deleteNode(listnode_t l, node_t n) {
-  listnode_t p = l;
-  listnode_t pp;
-  if (isEmptyNode(p))           // If the list 'l' is already empty
-    return l;
-  if (isEmptyNode(p->next)) {           // If the list 'l' has only one node
-    if ((p->val).numero == n.numero)           // If this single node is the node 'n'
-      return NULL;
-    return l;           // Node 'n' is missing in the list in this case
-  }
-  if ((p->val).numero == n.numero) {    // If node 'n' is the first node of the list
-    pp = p->next;
-    free(p);
-    return pp;
-  }
-  pp = p->next;
-  while (!isEmptyNode(pp)) {            // Otherwise : if 'n' position in the list is greater than the first position
-    if ((pp->val).numero == n.numero) {    // If the following node is the node 'n'
-      p->next = pp->next;
-      free(pp);                 // Free the memory allocated to the node 'n'
-      return l;
-    }
-    p = p->next;
-    pp = pp->next;
-  }
-  return l;     // Node 'n' is missing in the list
-}
-
-
-
 // Free the memory allocated to the graph
 // Return nothing
 void destructGraph(graph_t* graph) {
@@ -227,6 +59,7 @@ void destructStringData(char* filename, char* departureindex, char* arrivalindex
   if (arrivalname != NULL)
     free(arrivalname);
 }
+
 
 
 // Print all the data from a graph
@@ -349,7 +182,7 @@ void stringStandardise(char* string) {
   int i = 0; int j = 0;
   strcpy(buffer, string);
   while (buffer[i] != '\0') {     // While the end of 'string' is not reached
-    if (buffer[i] != ' ' && buffer[i] != '\t' && buffer[i] != '\n') {       // If the string caracter isn't a space, a tabulation or a carriage return
+    if (buffer[i] != '\t' && buffer[i] != '\n') {       // If the string caracter isn't a space, a tabulation or a carriage return
       string[j] = buffer[i];
       j++;
     }
@@ -360,24 +193,68 @@ void stringStandardise(char* string) {
 
 
 
+// Check if user data are correct
+//Return 0 if successful, 0 otherwise
+int dataCheck(graph_t graph, char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int* dep, int* arriv) {
+  int bit = 0; int i;
+  if (departureindex[0] != '\0')        // If the user has given a departure index
+    sscanf(departureindex, "%d", dep);     // get the departure index
+  else {                                            // If the user has given a departure name instead
+    for (i = 0; i < graph.size_vertex; i++) {         // Go through the nodes list to check if this node name exists
+      if (strcmp(graph.data[i].name, departurename) == 0) {
+        bit = 1;        // Bit = 1 means that the given node name exists
+        break;
+      }
+    }
+    if (!bit) {       // If the given node name doesn't exist
+      printf("%s : ", departurename);
+      warningMsg("this node name doesn't exist");
+      return 1;
+    }
+    else
+      *dep = i;      // If the node name exists, we get its index
+  }
+  bit = 0;
+  if (arrivalindex[0] != '\0')          // If the user has given an arrival index
+    sscanf(arrivalindex, "%d", arriv);     // Get the arrival index
+  else {                                        // If the user has given an arrival name instead
+    for (i = 0; i < graph.size_vertex; i++) {       // Go through the nodes list to check if this node name exists
+      if (strcmp(graph.data[i].name, arrivalname) == 0) {
+        bit = 1;              // Bit = 1 means that the given node name exists
+        break;
+      }
+    }
+    if (!bit) {               // If the given node name doesn't exist
+      printf("%s : ", arrivalname);
+      warningMsg("this node name doesn't exist");
+      return 1;
+    }
+    else
+      *arriv = i;             // If the node name exists, we get its index
+  }
+
+  if (*dep > graph.size_vertex || *arriv > graph.size_vertex) {
+    errorMsg("Departure and arrival node indexes cannot be greater than the maximal node index");
+    return 1;
+  }
+  return 0;
+}
+
+
+
 // Check if arguments are correct, and return 0
 // Return 0 if an error occured : not enough arguments, too much arguments, wrong file name, wrong file extension, incorrect argument type
-int dataCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int algo, int heuristic) {
+int dataPreCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, void (*algo)(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)), double (*heuristic)(double nx, double ny, double lat, double longi)) {
   int i;
   const char* separator = ".";      // Separator to isolate the file extension
   char cmd[64] = "ls Graphes/ | grep ";     // Unix command to check if the file exists
   char string[32];
 
-  if (!algo) {
+  if (algo == NULL) {
     errorMsg("You didn't choose an algorithm");
     return 1;
   }
-  if (algo != DIJKSTRA) {
-    if (!heuristic) {
-      errorMsg("You didn't choose a heuristic function");
-      return 1;
-    }
-  }
+
   strcpy(string, filename);
   char* strtoken = strtok(string, separator);   // Read filename without extension
   strtoken = strtok(NULL, separator);   // Get file extension
@@ -425,7 +302,9 @@ int dataCheck(char* filename, char* departurename, char* arrivalname, char* depa
 int main(int argc, char* argv[]) {
   graph_t graph;
   int code = 0;
-  int dep, arriv, i, bit, algo, heuristic;
+  int dep, arriv, i;
+  double (*heuristic)(double nx, double ny, double lat, double longi);
+  void (*algo)(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi));
 
   char* filename = calloc(32, sizeof(char));
   if (filename == NULL) {
@@ -457,69 +336,28 @@ int main(int argc, char* argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if (argc > 1) {
+  if (argc > 1) {       // If too much arguments have been specified
     warningMsg("You don't need to specify arguments after './path'.");
     destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
-  code = dataForm(filename, departurename, arrivalname, departureindex, arrivalindex, &algo, &heuristic);
+  code = dataForm(filename, departurename, arrivalname, departureindex, arrivalindex, &algo, &heuristic);   // Get user data through a graphic interface
   if (code != 0) {
     destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
-  code = dataCheck(filename, departurename, arrivalname, departureindex, arrivalindex, algo, heuristic);
+  code = dataPreCheck(filename, departurename, arrivalname, departureindex, arrivalindex, algo, heuristic);      // Check if user data are correct
   if (code != 0) {
     destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
-  code = loadData(&graph, filename);
+  code = loadData(&graph, filename);        // Load graph data from file
   if (code != 0) {
     destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
   }
-
-  if (departureindex[0] != '\0')
-    sscanf(departureindex, "%d", &dep);
-  else {
-    for (i = 0; i < graph.size_vertex; i++) {
-      if (strcmp(graph.data[i].name, departurename) == 0) {
-        bit = 1;
-        break;
-      }
-    }
-    if (!bit) {
-      printf("%s : ", departurename);
-      warningMsg("this node name doesn't exist");
-      destructGraph(&graph);
-      destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
-      exit(EXIT_FAILURE);
-    }
-    else
-      dep = i;
-  }
-  bit = 0;
-  if (arrivalindex[0] != '\0')
-    sscanf(arrivalindex, "%d", &arriv);
-  else {
-    for (i = 0; i < graph.size_vertex; i++) {
-      if (strcmp(graph.data[i].name, arrivalname) == 0) {
-        bit = 1;
-        break;
-      }
-    }
-    if (!bit) {
-      printf("%s : ", arrivalname);
-      warningMsg("this node name doesn't exist");
-      destructGraph(&graph);
-      destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
-      exit(EXIT_FAILURE);
-    }
-    else
-      arriv = i;
-  }
-
-  if (dep > graph.size_vertex || arriv > graph.size_vertex) {
-    errorMsg("Departure and arrival node indexes cannot be greater than the maximal node index");
+  code = dataCheck(graph, filename, departurename, arrivalname, departureindex, arrivalindex, &dep, &arriv);        // Load graph data from file
+  if (code != 0) {
     destructGraph(&graph);
     destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);
     exit(EXIT_FAILURE);
@@ -527,10 +365,7 @@ int main(int argc, char* argv[]) {
 
   infoMsg("########## PATHFINDER ALGORITHM ##########");
   puts("");
-  printf("dep=%d, arriv=%d, filename=%s\n", dep, arriv, filename);
-  //algoAstar(graph, dep, arriv);
-  algoDikstra(graph, dep, arriv);
-  //printGraph(graph);
+  (*algo)(graph, dep, arriv, heuristic);      // Execute the pathfinder algorithm
 
   destructGraph(&graph);
   destructStringData(filename, departureindex, arrivalindex, departurename, arrivalname);

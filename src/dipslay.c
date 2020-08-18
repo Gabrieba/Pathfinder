@@ -25,11 +25,14 @@ void processEvent(datauser_t* data) {
         break;
       case SDL_KEYDOWN:                           // A keyboard is pressed
         if (data->code > 0 && data->code < 6) {       // If the user has previously clicked on a text field
-          if (event.key.keysym.sym == SDLK_LSHIFT)        // If the pressed key is SHIFT
-            data->control = 1;                            // data.control is set to 1
+          if (event.key.keysym.sym == SDLK_LSHIFT) {       // If the pressed key is SHIFT
+            data->control = 1;                          // data.control is set to 1
+            break;
+          }
           if (data->control == 1) {                               // If the user is already pressing the SHIFT key
             if (event.key.keysym.sym > 96 && event.key.keysym.sym < 123) {      // If the user is pressing a letter key at the same time
               data->string = (char)event.key.keysym.sym - 32;              // Update data.string with the corresponding uppercase letter (-32 because of the ASCII code)
+              status = 0;
               break;
             }
             switch(event.key.keysym.sym) {            // If the user is pressing a key which is not a letter
@@ -74,9 +77,29 @@ void processEvent(datauser_t* data) {
                 break;
             }
           }
-          else        // If the SHIFT key was not previously pressed
-            data->string = (char)event.key.keysym.sym;      // Update data.string with the corresponding key value
-          status = 0;                         // I any case, the event is fully recovered, so we can quit the function
+          else {        // If the SHIFT key was not previously pressed
+            switch(event.key.keysym.sym) {      // Processing of special characters with an accent + normal letters
+              case 233:
+                strcpy(data->accent, "é");
+                break;
+              case 232:
+                strcpy(data->accent, "è");
+                break;
+              case 231:
+                strcpy(data->accent, "ç");
+                break;
+              case 224:
+                strcpy(data->accent, "à");
+                break;
+              case 249:
+                strcpy(data->accent, "ù");
+                break;
+              default:      // usual letter (a to z)
+                data->string = (char)event.key.keysym.sym;      // Update data.string with the corresponding key value
+                break;
+            }
+          }
+          status = 0;                         // In any case, the event is fully recovered, so we can quit the function
         }
         break;
       case SDL_MOUSEBUTTONDOWN:             // User has clicked on the mouse
@@ -126,14 +149,49 @@ void processEvent(datauser_t* data) {
 
 
 
+// Update the cases in the algorithm dataform (the one with the index 'index' is checked, the others are all unchecked)
+// Return nothing
+void updateCasesAlgo(object_t* imgcase, SDL_Surface* screen, int index) {
+  int i;
+  for (i = 0; i < 4; i++) {
+    if (i == index)
+      imgcase[i].surface = SDL_LoadBMP("image/case_checked.bmp");   // Selected case
+    else
+      imgcase[i].surface = SDL_LoadBMP("image/case.bmp");     // Other cases that are not selected
+    SDL_BlitSurface(imgcase[i].surface, NULL, screen, &(imgcase[i].position));
+  }
+  SDL_Flip(screen);                       // Update the whole SDL window
+}
+
+
+
+// Update the cases in the heuristic dataform (the one with the index 'index' is checked, the others are all unchecked)
+// Return nothing
+void updateCasesHeur(object_t* imgcase, SDL_Surface* screen, int index) {
+  int i;
+  for (i = 4; i < 9; i++) {
+    if (i == index)
+      imgcase[i].surface = SDL_LoadBMP("image/case_checked.bmp");     // Selected case
+    else
+      imgcase[i].surface = SDL_LoadBMP("image/case.bmp");         // Other cases that are not selected
+    SDL_BlitSurface(imgcase[i].surface, NULL, screen, &(imgcase[i].position));
+  }
+  SDL_Flip(screen);                       // Update the whole SDL window
+}
+
+
+
 // Display a graphic dataform to get user informations : pathfinder algorithm, graph name, departure and arrival node indexes and heuristic function
 // Return -1 if an error occured, 0 otherwise
-int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int* algo, int* heuristic) {
+int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, void (**algo)(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)), double (**heuristic)(double nx, double ny, double lat, double longi)) {
   int i;
   datauser_t data;          // To store user data
   SDL_Surface* screen = NULL;         // The global SDL screen
   SDL_Surface* text[22] = {NULL};       // SDL surfaces for textes
-  SDL_Surface* imgcase[11] = {NULL};     // SDL surfaces for images
+  object_t imgcase[11];               // SDL surfaces for images
+  for (i = 0; i < 11; i++) {
+    imgcase[i].surface = NULL;
+  }
   SDL_Surface* separator[21] = {NULL};    // SDL surfaces for separators
   SDL_Rect position;                     // SDL surfaces position in the window
   TTF_Font* police1 = NULL;             // Police for the main title
@@ -241,7 +299,7 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   text[20] = TTF_RenderText_Blended(police3, "Chebyshev", white);
   position.y = 377;
   SDL_BlitSurface(text[20], NULL, screen, &position);
-  text[21] = TTF_RenderText_Blended(police3, "(Leave it blank to work on the grid)", white);
+  text[21] = TTF_RenderText_Blended(police3, "(Leave all text fields blank to work on the grid)", white);
   position.x = 245;
   position.y = 430;
   SDL_BlitSurface(text[21], NULL, screen, &position);
@@ -343,43 +401,53 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   SDL_BlitSurface(separator[20], NULL, screen, &position);
 
   for (i = 0; i < 9; i++)
-    imgcase[i] = SDL_LoadBMP("image/case.bmp");     // Load 'box' image in SDL surfaces
-  position.x = 10;
-  position.y = 150;
-  SDL_BlitSurface(imgcase[0], NULL, screen, &position);
-  position.y = 180;
-  SDL_BlitSurface(imgcase[1], NULL, screen, &position);
-  position.x = 170;
-  position.y = 150;
-  SDL_BlitSurface(imgcase[2], NULL, screen, &position);
-  position.y = 180;
-  SDL_BlitSurface(imgcase[3], NULL, screen, &position);
-  position.x = 620;
-  position.y = 220;
-  SDL_BlitSurface(imgcase[4], NULL, screen, &position);
-  position.y = 260;
-  SDL_BlitSurface(imgcase[5], NULL, screen, &position);
-  position.y = 300;
-  SDL_BlitSurface(imgcase[6], NULL, screen, &position);
-  position.y = 340;
-  SDL_BlitSurface(imgcase[7], NULL, screen, &position);
-  position.y = 380;
-  SDL_BlitSurface(imgcase[8], NULL, screen, &position);
-  imgcase[9] = SDL_LoadBMP("image/apply_button.bmp");         // Load 'submit' button in the SDL surface
-  position.x = WIDTH/2 - ((imgcase[9])->w) / 2;
-  position.y = 525;
-  SDL_BlitSurface(imgcase[9], NULL, screen, &position);
-  imgcase[10] = SDL_LoadBMP("image/algorithm_grid.bmp");      // Load 'algorithm_grid.bmp' image in SDL surface
-  position.x = WIDTH - (imgcase[10])->w - 1;
-  position.y = 1;
-  SDL_BlitSurface(imgcase[10], NULL, screen, &position);
+    (imgcase[i]).surface = SDL_LoadBMP("image/case.bmp");     // Load 'box' image in SDL surfaces
+  imgcase[0].position.x = 10;
+  imgcase[0].position.y = 150;
+  SDL_BlitSurface(imgcase[0].surface, NULL, screen, &(imgcase[0].position));
+  imgcase[1].position.x = 10;
+  imgcase[1].position.y = 180;
+  SDL_BlitSurface(imgcase[1].surface, NULL, screen, &(imgcase[1].position));
+  imgcase[2].position.x = 170;
+  imgcase[2].position.y = 150;
+  SDL_BlitSurface(imgcase[2].surface, NULL, screen, &(imgcase[2].position));
+  imgcase[3].position.x = 170;
+  imgcase[3].position.y = 180;
+  SDL_BlitSurface(imgcase[3].surface, NULL, screen, &(imgcase[3].position));
+  imgcase[4].position.x = 620;
+  imgcase[4].position.y = 220;
+  SDL_BlitSurface(imgcase[4].surface, NULL, screen, &(imgcase[4].position));
+  imgcase[5].position.x = 620;
+  imgcase[5].position.y = 260;
+  SDL_BlitSurface(imgcase[5].surface, NULL, screen, &(imgcase[5].position));
+  imgcase[6].position.x = 620;
+  imgcase[6].position.y = 300;
+  SDL_BlitSurface(imgcase[6].surface, NULL, screen, &(imgcase[6].position));
+  imgcase[7].position.x = 620;
+  imgcase[7].position.y = 340;
+  SDL_BlitSurface(imgcase[7].surface, NULL, screen, &(imgcase[7].position));
+  imgcase[8].position.x = 620;
+  imgcase[8].position.y = 380;
+  SDL_BlitSurface(imgcase[8].surface, NULL, screen, &(imgcase[8].position));
+  imgcase[9].surface = SDL_LoadBMP("image/apply_button.bmp");         // Load 'submit' button in the SDL surface
+  imgcase[9].position.x = WIDTH/2 - ((imgcase[9].surface)->w) / 2;
+  imgcase[9].position.y = 525;
+  SDL_BlitSurface(imgcase[9].surface, NULL, screen, &(imgcase[9].position));
+  imgcase[10].surface = SDL_LoadBMP("image/algorithm_grid.bmp");      // Load 'algorithm_grid.bmp' image in SDL surface
+  imgcase[10].position.x = WIDTH - (imgcase[10].surface)->w - 1;
+  imgcase[10].position.y = 1;
+  SDL_BlitSurface(imgcase[10].surface, NULL, screen, &(imgcase[10].position));
 
   SDL_Flip(screen);                       // Update the whole SDL window
   data.code = 0;              // Initialize data.code
   data.control = 0;           // Initialize data.control
   data.string = '\0';         // Initialize data.string
-  *algo = 0;                 // Initialize algorithm choice
-  *heuristic = 0;             // Initialize heuristic function choice
+  data.accent = calloc(16, sizeof(char));
+  if (data.accent == NULL) {
+    errorMsg("Error when allocating memory to data.accent");
+    return -1;
+  }
+  (data.accent)[0] = '\0';      // Initialize data.accent
   while (data.code != -1 && data.code != 15) {      // As long as the user has not left the window (code = -1) or clicked on 'submit' button (code = 15)
     processEvent(&data);            // Wait for an user event
     if (data.string != '\0') {            // If a character has been registered
@@ -401,51 +469,85 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
           break;
         default:
           errorMsg("Should not be here");         // Because the user enters a character but no text field is selected
+          free(data.accent);
           return -1;
       }
     data.string = '\0';         // Reset data.string
     }
-    else if (data.code > 5 && data.code < 15) {      // Else if a box has been checked
+    else if ((data.accent)[0] != '\0') {          // A special character has been chosen
+      switch(data.code) {                 // To determine which text field
+        case 1:                               // 'filename' text field
+          sprintf(filename, "%s%s", filename, data.accent);       // Concatenate the character at the end of the word 'filename'
+          break;
+        case 2:                               // 'departureindex' text field
+          sprintf(departureindex, "%s%s", departureindex, data.accent);       // Concatenate the character at the end of the word 'departureindex'
+          break;
+        case 3:                                   // 'arrivalindex' text field
+          sprintf(arrivalindex, "%s%s", arrivalindex, data.accent);       // Concatenate the character at the end of the word 'arrivalindex'
+          break;
+        case 4:                                 // 'departurename' text field
+          sprintf(departurename, "%s%s", departurename, data.accent);           // Concatenate the character at the end of the word 'departurename'
+          break;
+        case 5:                                 // 'arrivalname' text field
+          sprintf(arrivalname, "%s%s", arrivalname, data.accent);           // Concatenate the character at the end of the word 'arrivalname'
+          break;
+        default:
+          errorMsg("Should not be here");         // Because the user enters a character but no text field has been selected
+          free(data.accent);
+          return -1;
+      }
+      data.accent[0] = '\0';      // Reset data.accent
+    }
+    else if (data.code > 5 && data.code < 10) {      // Else if an algorithm box has been checked
       switch(data.code) {       // To determine which box has been checked
-        printf("%d\n", data.code);
-        case 6:
-          *algo = ASTAR;
+        case 6:           // Astar
+          *algo = &pathfinder1;       // Pointer to A Star function
           break;
-        case 7:
-          *algo = DIJKSTRA;
+        case 7:           // Dijkstra
+          *algo = &pathfinder1;       // Pointer to Dijkstra function
           break;
-        case 8:
-          *algo = BFS;
+        case 8:           // BFS
+          *algo = &pathfinder2;             // Pointer to BFS function
           break;
-        case 9:
-          *algo = DFS;
-          break;
-        case 10:
-          *heuristic = CIRCLE;
-          break;
-        case 11:
-          *heuristic = MANHATTAN;
-          break;
-        case 12:
-          *heuristic = EUCLIDEAN;
-          break;
-        case 13:
-          *heuristic = OCTILE;
-          break;
-        case 14:
-          *heuristic = CHEBYSHEV;
+        case 9:           // DFS
+          *algo = &pathfinder3;             // Pointer to DFS function
           break;
         default:
           errorMsg("Should never be here");     // Because the user has checked a box but none of boxes has been checked
+          free(data.accent);
           return -1;
       }
+      updateCasesAlgo(imgcase, screen, (data.code)-6);
     }
-
+    else if (data.code > 9 && data.code < 15) {     // Else if a heuristic function box has been checked
+      switch(data.code) {
+        case 10:
+          *heuristic = &greatCircle;      // Function pointer to heuristic function "greatCircle"
+          break;
+        case 11:
+          *heuristic = &manhattan;      // Function pointer to heuristic function "manhattan"
+          break;
+        case 12:
+          *heuristic = &euclidean;      // Function pointer to heuristic function "euclidean"
+          break;
+        case 13:
+          *heuristic = &octile;       // Function pointer to heuristic function "octile"
+          break;
+        case 14:
+          *heuristic = &chebyshev;      // Function pointer to heuristic function "chebyshev"
+          break;
+        default:
+          errorMsg("Should never be here");     // Because the user has checked a box but none of boxes has been checked
+          free(data.accent);
+          return -1;
+      }
+      updateCasesHeur(imgcase, screen, (data.code)-6);
+    }
   }
   for (i = 0; i < 22; i++)      // Free memory allocated to text SDL surfaces
     SDL_FreeSurface(text[i]);
   for (i = 0; i < 11; i++)        // Free memory allocated to image SDL surfaces
-    SDL_FreeSurface(imgcase[i]);
+    SDL_FreeSurface(imgcase[i].surface);
   for (i = 0; i < 21; i++)          // Free memory allocated to separator SDL surfaces
     SDL_FreeSurface(separator[i]);
   SDL_FreeSurface(screen);          // Free memory allocated to the main SDL screen
@@ -454,5 +556,8 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   TTF_CloseFont(police3);         // Close TTF police
   TTF_Quit();                 // Close TTF
   SDL_Quit();               // Close SDL
-  return 0;
+  free(data.accent);
+  if (data.code == -1)    // User asks to leave the window
+    return -1;
+  return 0;       // User has clicked on "submit" button
 }

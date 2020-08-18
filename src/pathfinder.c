@@ -5,30 +5,6 @@
 
 #include "../inc/main.h"
 
-// DEBUG FUNCTION
-// Print the nodes list in the shell
-// Return nothing
-void printNodeList(listnode_t l) {
-  listnode_t p = l;
-  while (!isEmptyNode(p)) {
-    printf("n°%d - %s - cost = %lf\n",(p->val).numero, (p->val).name, (p->val).cost);
-    p = p->next;
-  }
-  puts("");
-}
-
-// DEBUG FUNCTION
-// Print the nodes list in the shell
-// Return nothing
-void printEdgeList(listedge_t l) {
-  listedge_t p = l;
-  while (!isEmptyEdge(p)) {
-    printf("n°%d ---> n°%d \t\t cost = %lf\n",(p->val).departure, (p->val).arrival, (p->val).cost);
-    p = p->next;
-  }
-  puts("");
-}
-
 
 
 // Print the entire path at the end of the pathfinder algorithm
@@ -54,8 +30,44 @@ void printPath(listindex_t l, graph_t graph) {
 // Return the great circle distance between two points on the Earth surface
 // Distances given in kilometers
 // 6371 is the average radius of the Earth
-int greatCircle(double lat1, double long1, double lat2, double long2) {
+double greatCircle(double lat1, double long1, double lat2, double long2) {
   return (6371*acos(cos(lat1)*cos(lat2)*cos(long2-long1) + sin(lat1)*sin(lat2)));
+}
+
+
+
+// Return the Manhattan distance between two points
+// Distance given in kilometers
+double manhattan(double lat1, double long1, double lat2, double long2) {
+  puts("Not implemented yet !");
+  return (0);
+}
+
+
+
+// Return the Euclidean distance between two points
+// Distance given in kilometers
+double euclidean(double lat1, double long1, double lat2, double long2) {
+  puts("Not implemented yet !");
+  return (0);
+}
+
+
+
+// Return the Octile distance between two points
+// Distance given in kilometers
+double octile(double lat1, double long1, double lat2, double long2) {
+  puts("Not implemented yet !");
+  return (0);
+}
+
+
+
+// Return the Chebyshev distance between two points
+// Distance given in kilometers
+double chebyshev(double lat1, double long1, double lat2, double long2) {
+  puts("Not implemented yet !");
+  return (0);
 }
 
 
@@ -90,44 +102,25 @@ void freeMemoryList(listnode_t l1, listnode_t l2, listindex_t l3) {
 
 
 
-// Compute the node 'n' cost (for A* algorithm) and store it in node 'n'
-// Return nothing
-void evaluationAStar(node_t* n, listedge_t l, int i_parent, double cost_parent, double lat, double longi) {
-  double cost_edge;     // Cost of the edge to reach the node 'n' from its parent node
-  if (i_parent == -1)
-    cost_edge = 0;
-  else
-    cost_edge = (l->val).cost;
-  n->cost = cost_parent + cost_edge + greatCircle(n->x, n->y, lat, longi);    // Evaluation function = the real cost to reach this node from the starting point + heuristic value
-//  printf("%lf\n", n->cost);
-}
-
-
-
-// Compute the node 'n' cost (for Dijkstra algorithm) and store it in node 'n'
-// Return nothing
-void evaluationDikstra(node_t* n, listedge_t l, int i_parent, double cost_parent, double lat, double longi) {
-  double cost_edge;     // Cost of the edge to reach the node 'n' from its parent node
-  if (i_parent == -1)
-    cost_edge = 0;
-  else
-    cost_edge = (l->val).cost;
-  n->cost = cost_parent + cost_edge;    // Evaluation function = the real cost to reach this node from the starting point only
-//  printf("%lf\n", n->cost);
-}
-
-
-
 // Load data from a vertex_t variable (v) to a node_t variable (n)
-// Need some extra data from the parent node (its index 'i_parent' and its cost 'cost_parent') and from the arrival node ('lat' and 'long')
-// Return 1 if an error occured, 0 otherwise
-void loadNode(node_t* n, vertex_t v, int i_parent) {
+// Need some extra data from the parent node (its index 'i_parent' and its cost 'cost_parent') and from the arrival node ('lat' and 'long') and the heuristic function to compute the node cost
+// Return nothing
+void loadNode(node_t* n, vertex_t v, listedge_t l, int i_parent, double cost_parent, double lat, double longi, double (*heuristic)(double nx, double ny, double lat, double longi)) {
+  double cost_edge;
   n->numero = v.numero;     // Get the index node
   strcpy(n->name, v.name);      // Get the node name
   strcpy(n->line, v.line);      // Get the line name
   n->x = v.x;           // Get the node coordinates
   n->y = v.y;
   n->parent = i_parent;     // Get the parent node index
+  if (i_parent == -1)         // If the current node is the departure node (so there is no parent node)
+    cost_edge = 0;
+  else                    // If the current node is not the departure node
+    cost_edge = (l->val).cost;
+  if ((*heuristic) != NULL)        // If the algorithm is not Dijkstra
+    n->cost = cost_parent + cost_edge + (*heuristic)(n->x, n->y, lat, longi);    // Evaluation function = the real cost to reach this node from the starting point + heuristic value
+  else
+    n->cost = cost_parent + cost_edge;    // No heuristic function for Dijkstra algorithm
 }
 
 
@@ -135,7 +128,7 @@ void loadNode(node_t* n, vertex_t v, int i_parent) {
 // Compute the shortest path in the graph, between vertex 'dep' and 'arriv' according to A Star and Dijkstra algorithm
 // Print the path in the shell
 // Return nothing
-void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(node_t*, listedge_t, int, double, double, double)) {
+void pathfinder1(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)) {
   listnode_t closed = createListNode();       // List of nodes that are already treated
   listnode_t opened = createListNode();       // List of nodes neighbouring to nodes that are the 'closed' list
   listnode_t p; listnode_t pp;            // Nodes list used to go through 'opened' and 'closed' lists
@@ -171,8 +164,7 @@ void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(no
     return;
   }
 
-  loadNode(&current_node, graph.data[dep], -1);    // Load data from vertex 'graph.data[dep]' to current node (which is the departure node) ; parent node index = -1 means that it has no parent node
-  (*evaluationFunction)(&current_node, NULL, -1, 0, graph.data[arriv].x, graph.data[arriv].y);
+  loadNode(&current_node, graph.data[dep], NULL, -1, 0, graph.data[arriv].x, graph.data[arriv].y, heuristic);    // Load data from vertex 'graph.data[dep]' to current node (which is the departure node) ; parent node index = -1 means that it has no parent node
   opened = addNodes(opened, current_node);      // Add the current node (which is the starting node) in the 'opened' list
 
   while (!isEmptyNode(opened)) {      // As long as there are nodes in the 'opened' list (otherwise there will be no possible path)
@@ -208,8 +200,7 @@ void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(no
 
     l = (graph.data[current_node.numero]).edges;    // Get the list of edges of the node 'current_node'
     while (!isEmptyEdge(l)) {                      // Goes through the list of edges to get all the neighbour nodes of node 'current_node'
-      loadNode(&node, graph.data[(l->val).arrival], current_node.numero);
-      (*evaluationFunction)(&node, l, current_node.numero, cost, graph.data[arriv].x, graph.data[arriv].y);
+      loadNode(&node, graph.data[(l->val).arrival], l, current_node.numero, cost, graph.data[arriv].x, graph.data[arriv].y, heuristic);
 
       p = opened;
       while (!isEmptyNode(p) && ((p->val).numero != node.numero)) {   // Goes through the opened list to check if the neighbour node 'n' is already present
@@ -240,16 +231,21 @@ void pathfinder(graph_t graph, int dep, int arriv, void (*evaluationFunction)(no
 
 
 
-// Execute A* algorithm
+
+// Compute the shortest path in the graph, between vertex 'dep' and 'arriv' according to BFS algorithm
+// Print the path in the shell
 // Return nothing
-void algoAstar(graph_t graph, int dep, int arriv) {
-  pathfinder(graph, dep, arriv, &evaluationAStar);
+void pathfinder2(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)) {
+  puts("BFS algorithm not implemented yet !");
+  return;
 }
 
 
 
-// Execute Dijkstra algorithm
+// Compute the shortest path in the graph, between vertex 'dep' and 'arriv' according to DFS algorithm
+// Print the path in the shell
 // Return nothing
-void algoDikstra(graph_t graph, int dep, int arriv) {
-  pathfinder(graph, dep, arriv, &evaluationDikstra);
+void pathfinder3(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)) {
+  puts("DFS algorithm not implemented yet !");
+  return;
 }
