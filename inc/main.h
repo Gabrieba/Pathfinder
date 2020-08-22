@@ -12,12 +12,14 @@
 #define HEIGHT 590     // SDL window height
 #define WIDTH 850      // SSL window width
 
+// Average Earth radius (in kilometers)
+#define RT 6371
 
 
 // Data user storage (used by dataForm)
 typedef struct {
 int code;       // Memorize which text field has been selected
-int control;        // Memorize if SHIFT key is pressed
+int control;        // Memorize if SHIFT key (1) or DELETE key (2) is pressed
 char string;        // Store the chosen letter
 char* accent;        // Store the chosen special caracter (é, à, ç, è, ù)
 } datauser_t;
@@ -123,6 +125,7 @@ void processEvent(datauser_t* data);
 int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, void (**algo)(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)), double (**heuristic)(double nx, double ny, double lat, double longi));
 void updateCasesAlgo(object_t* imgcase, SDL_Surface* screen, int index);
 void updateCasesHeur(object_t* imgcase, SDL_Surface* screen, int index);
+void fieldSelected(int code, object_t* sep, SDL_Surface* screen);
 
 
 // "list.c" function prototypes

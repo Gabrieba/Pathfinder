@@ -94,6 +94,9 @@ void processEvent(datauser_t* data) {
               case 249:
                 strcpy(data->accent, "ù");
                 break;
+              case 8:       // "DELETE" key
+                data->control = 2;
+                break;
               default:      // usual letter (a to z)
                 data->string = (char)event.key.keysym.sym;      // Update data.string with the corresponding key value
                 break;
@@ -181,6 +184,86 @@ void updateCasesHeur(object_t* imgcase, SDL_Surface* screen, int index) {
 
 
 
+// Display the text written by the user in the selected text field
+// Perform the character deleting if necessary
+// Return nothing
+void textDisplay(datauser_t data, SDL_Surface* screen) {
+  switch (data.code) {
+    case 1:
+      if (data.string != '\0') {
+
+      }
+      else if (data.accent != '\0') {
+
+      }
+      else if (data.control == 2) {
+
+      }
+      else {
+        errorMsg("Should not be here.");
+        return;
+      }
+      break;
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    default:
+      errorMsg("Should not be here.");
+      return;
+  }
+  SDL_Flip(screen);
+}
+
+
+
+// Selected text fields become red when selected
+// Return nothing
+void fieldSelected(int code, object_t* sep, SDL_Surface* screen) {
+  int i;
+  for (i = 1; i < 21; i++) {          // First all text field separators are reset in black color
+    SDL_FillRect((sep[i]).surface, NULL, SDL_MapRGB(((sep[i]).surface)->format, 0, 0, 0));
+    SDL_BlitSurface((sep[i]).surface, NULL, screen, &(sep[i].position));
+  }
+  switch(code) {      // Then the selected text field separators are set in red color
+    case 1:             // "filename" text field
+      for (i = 1; i < 5; i++) {
+        SDL_FillRect((sep[i]).surface, NULL, SDL_MapRGB(((sep[i]).surface)->format, 255, 0, 0));
+        SDL_BlitSurface((sep[i]).surface, NULL, screen, &(sep[i].position));
+      }
+      break;
+    case 2:       // "departureindex" text field
+      for (i = 5; i < 9; i++) {
+        SDL_FillRect((sep[i]).surface, NULL, SDL_MapRGB(((sep[i]).surface)->format, 255, 0, 0));
+        SDL_BlitSurface((sep[i]).surface, NULL, screen, &(sep[i].position));
+      }
+      break;
+    case 3:     // "arrivalindex" text field
+      for (i = 9; i < 13; i++) {
+        SDL_FillRect((sep[i]).surface, NULL, SDL_MapRGB(((sep[i]).surface)->format, 255, 0, 0));
+        SDL_BlitSurface((sep[i]).surface, NULL, screen, &(sep[i].position));
+      }
+      break;
+    case 4:     // "departurename" text field
+      for (i = 13; i < 17; i++) {
+        SDL_FillRect((sep[i]).surface, NULL, SDL_MapRGB(((sep[i]).surface)->format, 255, 0, 0));
+        SDL_BlitSurface((sep[i]).surface, NULL, screen, &(sep[i].position));
+      }
+      break;
+    case 5:       // "arrivalname" text field
+      for (i = 17; i < 21; i++) {
+        SDL_FillRect((sep[i]).surface, NULL, SDL_MapRGB(((sep[i]).surface)->format, 255, 0, 0));
+        SDL_BlitSurface((sep[i]).surface, NULL, screen, &(sep[i].position));
+      }
+      break;
+    default:
+      errorMsg("Should not be here.");
+      return;
+  }
+  SDL_Flip(screen);       // Update the whole SDL window
+}
+
+
 // Display a graphic dataform to get user informations : pathfinder algorithm, graph name, departure and arrival node indexes and heuristic function
 // Return -1 if an error occured, 0 otherwise
 int dataForm(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, void (**algo)(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)), double (**heuristic)(double nx, double ny, double lat, double longi)) {
@@ -192,7 +275,10 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   for (i = 0; i < 11; i++) {
     imgcase[i].surface = NULL;
   }
-  SDL_Surface* separator[21] = {NULL};    // SDL surfaces for separators
+  object_t separator[23];           // SDL surfaces for separators
+  for (i = 0; i < 23; i++) {
+    separator[i].surface = NULL;
+  }
   SDL_Rect position, positionfile, positionindexdep, positionindexarriv, positionnamedep, positionnamearriv;                     // SDL surfaces position in the window
   positionfile.x = 259;
   positionfile.y = 394;
@@ -315,101 +401,101 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   position.y = 430;
   SDL_BlitSurface(text[21], NULL, screen, &position);
 
-  separator[0] = SDL_CreateRGBSurface(SDL_HWSURFACE, 500, 1, 32, 0, 0, 0, 0);       // Separator line between 'START node' and 'END node'
-  SDL_FillRect(separator[0], NULL, SDL_MapRGB((separator[0])->format, 255, 255, 255));      // Set the color to white
-  position.x = 10;
-  position.y = 310;
-  SDL_BlitSurface(separator[0], NULL, screen, &position);                       // Add the separator to the SDL window
-  separator[1] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[2] = SDL_CreateRGBSurface(SDL_HWSURFACE, 200, 2, 32, 0, 0, 0, 0);
-  separator[3] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[4] = SDL_CreateRGBSurface(SDL_HWSURFACE, 200, 2, 32, 0, 0, 0, 0);
+  (separator[0]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 500, 1, 32, 0, 0, 0, 0);       // Separator line between 'START node' and 'END node'
+  SDL_FillRect((separator[0]).surface, NULL, SDL_MapRGB(((separator[0]).surface)->format, 255, 255, 255));      // Set the color to white
+  (separator[0]).position.x = 10;
+  (separator[0]).position.y = 310;
+  SDL_BlitSurface((separator[0]).surface, NULL, screen, &(separator[0].position));                       // Add the separator to the SDL window
+  (separator[1]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[2]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 200, 2, 32, 0, 0, 0, 0);
+  (separator[3]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[4]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 200, 2, 32, 0, 0, 0, 0);
   for (i = 1; i < 5; i++)
-    SDL_FillRect(separator[i], NULL, SDL_MapRGB((separator[i])->format, 0, 0, 0));      // Separators that delimit the text field 'filename'
-  position.x = 255;
-  position.y = 394;
-  SDL_BlitSurface(separator[1], NULL, screen, &position);
-  position.x = 255;
-  position.y = 394;
-  SDL_BlitSurface(separator[2], NULL, screen, &position);
-  position.x = 455;
-  position.y = 394;
-  SDL_BlitSurface(separator[3], NULL, screen, &position);
-  position.x = 255;
-  position.y = 416;
-  SDL_BlitSurface(separator[4], NULL, screen, &position);
-  separator[5] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[6] = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
-  separator[7] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[8] = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
+    SDL_FillRect((separator[i]).surface, NULL, SDL_MapRGB(((separator[i]).surface)->format, 0, 0, 0));      // Separators that delimit the text field 'filename'
+  (separator[1]).position.x = 255;
+  (separator[1]).position.y = 394;
+  SDL_BlitSurface((separator[1]).surface, NULL, screen, &((separator[1]).position));
+  (separator[2]).position.x = 255;
+  (separator[2]).position.y = 394;
+  SDL_BlitSurface((separator[2]).surface, NULL, screen, &((separator[2]).position));
+  (separator[3]).position.x = 455;
+  (separator[3]).position.y = 394;
+  SDL_BlitSurface(separator[3].surface, NULL, screen, &((separator[3]).position));
+  (separator[4]).position.x = 255;
+  (separator[4]).position.y = 416;
+  SDL_BlitSurface(separator[4].surface, NULL, screen, &((separator[4]).position));
+  (separator[5]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[6]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
+  (separator[7]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[8]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
   for (i = 5; i < 9; i++)
-    SDL_FillRect(separator[i], NULL, SDL_MapRGB((separator[i])->format, 0, 0, 0));    // Separators that delimit the text field 'departureindex'
-  position.x = 175;
-  position.y = 275;
-  SDL_BlitSurface(separator[5], NULL, screen, &position);
-  position.x = 175;
-  position.y = 275;
-  SDL_BlitSurface(separator[6], NULL, screen, &position);
-  position.x = 205;
-  position.y = 275;
-  SDL_BlitSurface(separator[7], NULL, screen, &position);
-  position.x = 175;
-  position.y = 297;
-  SDL_BlitSurface(separator[8], NULL, screen, &position);
-  separator[9] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[10] = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
-  separator[11] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[12] = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
+    SDL_FillRect((separator[i]).surface, NULL, SDL_MapRGB(((separator[i]).surface)->format, 0, 0, 0));    // Separators that delimit the text field 'departureindex'
+  (separator[5]).position.x = 175;
+  (separator[5]).position.y = 275;
+  SDL_BlitSurface((separator[5]).surface, NULL, screen, &((separator[5]).position));
+  (separator[6]).position.x = 175;
+  (separator[6]).position.y = 275;
+  SDL_BlitSurface((separator[6]).surface, NULL, screen, &((separator[6]).position));
+  (separator[7]).position.x = 205;
+  (separator[7]).position.y = 275;
+  SDL_BlitSurface((separator[7]).surface, NULL, screen, &((separator[7]).position));
+  (separator[8]).position.x = 175;
+  (separator[8]).position.y = 297;
+  SDL_BlitSurface((separator[8]).surface, NULL, screen, &((separator[8]).position));
+  (separator[9]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[10]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
+  (separator[11]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[12]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 30, 2, 32, 0, 0, 0, 0);
   for (i = 9; i < 13; i++)
-    SDL_FillRect(separator[i], NULL, SDL_MapRGB((separator[i])->format, 0, 0, 0));    // Separators that delimit the text field 'arrivalindex'
-  position.x = 175;
-  position.y = 325;
-  SDL_BlitSurface(separator[9], NULL, screen, &position);
-  position.x = 175;
-  position.y = 325;
-  SDL_BlitSurface(separator[10], NULL, screen, &position);
-  position.x = 205;
-  position.y = 325;
-  SDL_BlitSurface(separator[11], NULL, screen, &position);
-  position.x = 175;
-  position.y = 347;
-  SDL_BlitSurface(separator[12], NULL, screen, &position);
-  separator[13] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[14] = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
-  separator[15] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[16] = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
+    SDL_FillRect((separator[i]).surface, NULL, SDL_MapRGB(((separator[i]).surface)->format, 0, 0, 0));    // Separators that delimit the text field 'arrivalindex'
+  (separator[9]).position.x = 175;
+  (separator[9]).position.y = 325;
+  SDL_BlitSurface((separator[9]).surface, NULL, screen, &((separator[9]).position));
+  (separator[10]).position.x = 175;
+  (separator[10]).position.y = 325;
+  SDL_BlitSurface((separator[10]).surface, NULL, screen, &((separator[10]).position));
+  (separator[11]).position.x = 205;
+  (separator[11]).position.y = 325;
+  SDL_BlitSurface((separator[11]).surface, NULL, screen, &((separator[11]).position));
+  (separator[12]).position.x = 175;
+  (separator[12]).position.y = 347;
+  SDL_BlitSurface((separator[12]).surface, NULL, screen, &((separator[12]).position));
+  separator[13].surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  separator[14].surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
+  separator[15].surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  separator[16].surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
   for (i = 13; i < 17; i++)
-    SDL_FillRect(separator[i], NULL, SDL_MapRGB((separator[i])->format, 0, 0, 0));      // Separators that delimit the text field 'departurename'
-  position.x = 358;
-  position.y = 275;
-  SDL_BlitSurface(separator[13], NULL, screen, &position);
-  position.x = 358;
-  position.y = 275;
-  SDL_BlitSurface(separator[14], NULL, screen, &position);
-  position.x = 498;
-  position.y = 275;
-  SDL_BlitSurface(separator[15], NULL, screen, &position);
-  position.x = 358;
-  position.y = 297;
-  SDL_BlitSurface(separator[16], NULL, screen, &position);
-  separator[17] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[18] = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
-  separator[19] = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
-  separator[20] = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
+    SDL_FillRect((separator[i]).surface, NULL, SDL_MapRGB(((separator[i]).surface)->format, 0, 0, 0));      // Separators that delimit the text field 'departurename'
+  (separator[13]).position.x = 358;
+  (separator[13]).position.y = 275;
+  SDL_BlitSurface((separator[13]).surface, NULL, screen, &((separator[13]).position));
+  (separator[14]).position.x = 358;
+  (separator[14]).position.y = 275;
+  SDL_BlitSurface((separator[14]).surface, NULL, screen, &((separator[14]).position));
+  (separator[15]).position.x = 498;
+  (separator[15]).position.y = 275;
+  SDL_BlitSurface((separator[15]).surface, NULL, screen, &((separator[15]).position));
+  (separator[16]).position.x = 358;
+  (separator[16]).position.y = 297;
+  SDL_BlitSurface((separator[16]).surface, NULL, screen, &((separator[16]).position));
+  (separator[17]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[18]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
+  (separator[19]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 2, 22, 32, 0, 0, 0, 0);
+  (separator[20]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 140, 2, 32, 0, 0, 0, 0);
   for (i = 17; i < 21; i++)
-    SDL_FillRect(separator[i], NULL, SDL_MapRGB((separator[i])->format, 0, 0, 0));      // Separators that delimit the text field 'arrivalname'
-  position.x = 358;
-  position.y = 325;
-  SDL_BlitSurface(separator[17], NULL, screen, &position);
-  position.x = 358;
-  position.y = 325;
-  SDL_BlitSurface(separator[18], NULL, screen, &position);
-  position.x = 498;
-  position.y = 325;
-  SDL_BlitSurface(separator[19], NULL, screen, &position);
-  position.x = 358;
-  position.y = 347;
-  SDL_BlitSurface(separator[20], NULL, screen, &position);
+    SDL_FillRect((separator[i]).surface, NULL, SDL_MapRGB(((separator[i]).surface)->format, 0, 0, 0));      // Separators that delimit the text field 'arrivalname'
+  (separator[17]).position.x = 358;
+  (separator[17]).position.y = 325;
+  SDL_BlitSurface((separator[17]).surface, NULL, screen, &((separator[17]).position));
+  (separator[18]).position.x = 358;
+  (separator[18]).position.y = 325;
+  SDL_BlitSurface((separator[18]).surface, NULL, screen, &((separator[18]).position));
+  (separator[19]).position.x = 498;
+  (separator[19]).position.y = 325;
+  SDL_BlitSurface((separator[19]).surface, NULL, screen, &((separator[19]).position));
+  (separator[20]).position.x = 358;
+  (separator[20]).position.y = 347;
+  SDL_BlitSurface((separator[20]).surface, NULL, screen, &((separator[20]).position));
 
   for (i = 0; i < 9; i++)
     (imgcase[i]).surface = SDL_LoadBMP("image/case.bmp");     // Load 'box' image in SDL surfaces
@@ -461,6 +547,7 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
   (data.accent)[0] = '\0';      // Initialize data.accent
   while (data.code != -1 && data.code != 15) {      // As long as the user has not left the window (code = -1) or clicked on 'submit' button (code = 15)
     processEvent(&data);            // Wait for an user event
+
     if (data.string != '\0') {            // If a character has been registered
       switch(data.code) {                 // To determine which text field
         case 1:                               // 'filename' text field
@@ -532,6 +619,75 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
       SDL_Flip(screen);         // Update the whole SDL window
       data.accent[0] = '\0';      // Reset data.accent
     }
+    if (data.code > 0 && data.code < 6) {              // If the user is using a text field
+      fieldSelected(data.code, separator, screen);     // Text fields become red when selected
+      if (data.control == 2) {        // If "DELETE" key has been pressed
+        switch(data.code) {
+          case 1:                               // 'filename' text field
+            if (filename[0] != '\0') {        // If the text field is not already empty
+              filename[strlen(filename)-1] = '\0';            // The last character is deleted
+              (separator[22]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 198, 20, 32, 0, 0, 0, 0);
+              SDL_FillRect((separator[22]).surface, NULL, SDL_MapRGB(((separator[22]).surface)->format, 50, 50, 50));
+              (separator[22]).position.x = (separator[1]).position.x + 2;
+              (separator[22]).position.y = (separator[1]).position.y + 2;
+              SDL_BlitSurface((separator[22]).surface, NULL, screen, &((separator[22]).position));
+              text[22] = TTF_RenderText_Blended(police3, filename, green);
+              SDL_BlitSurface(text[22], NULL, screen, &positionfile);
+            }
+            break;
+          case 2:                               // 'departureindex' text field
+            if (departureindex[0] != '\0') {        // If the text field is not already empty
+              departureindex[strlen(departureindex)-1] = '\0';            // The last character is deleted
+              (separator[22]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 28, 20, 32, 0, 0, 0, 0);
+              SDL_FillRect((separator[22]).surface, NULL, SDL_MapRGB(((separator[22]).surface)->format, 50, 50, 50));
+              (separator[22]).position.x = (separator[5]).position.x + 2;
+              (separator[22]).position.y = (separator[5]).position.y + 2;
+              SDL_BlitSurface((separator[22]).surface, NULL, screen, &((separator[22]).position));
+              text[23] = TTF_RenderText_Blended(police3, departureindex, green);
+              SDL_BlitSurface(text[23], NULL, screen, &positionindexdep);
+            }
+            break;
+          case 3:                                   // 'arrivalindex' text field
+            if (arrivalindex[0] != '\0') {        // If the text field is not already empty
+              arrivalindex[strlen(arrivalindex)-1] = '\0';            // The last character is deleted
+              (separator[22]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 28, 20, 32, 0, 0, 0, 0);
+              SDL_FillRect((separator[22]).surface, NULL, SDL_MapRGB(((separator[22]).surface)->format, 50, 50, 50));
+              (separator[22]).position.x = (separator[9]).position.x + 2;
+              (separator[22]).position.y = (separator[9]).position.y + 2;
+              SDL_BlitSurface((separator[22]).surface, NULL, screen, &((separator[22]).position));
+              text[24] = TTF_RenderText_Blended(police3, arrivalindex, green);
+              SDL_BlitSurface(text[24], NULL, screen, &positionindexarriv);
+            }
+            break;
+          case 4:                                 // 'departurename' text field
+            if (departurename[0] != '\0') {        // If the text field is not already empty
+              departurename[strlen(departurename)-1] = '\0';            // The last character is deleted
+              (separator[22]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 138, 20, 32, 0, 0, 0, 0);
+              SDL_FillRect((separator[22]).surface, NULL, SDL_MapRGB(((separator[22]).surface)->format, 50, 50, 50));
+              (separator[22]).position.x = (separator[13]).position.x + 2;
+              (separator[22]).position.y = (separator[13]).position.y + 2;
+              SDL_BlitSurface((separator[22]).surface, NULL, screen, &((separator[22]).position));
+              text[25] = TTF_RenderText_Blended(police3, departurename, green);
+              SDL_BlitSurface(text[25], NULL, screen, &positionnamedep);
+            }
+            break;
+          case 5:                                 // 'arrivalname' text field
+            if (arrivalname[0] != '\0') {        // If the text field is not already empty
+              arrivalname[strlen(arrivalname)-1] = '\0';            // The last character is deleted
+              (separator[22]).surface = SDL_CreateRGBSurface(SDL_HWSURFACE, 138, 20, 32, 0, 0, 0, 0);
+              SDL_FillRect((separator[22]).surface, NULL, SDL_MapRGB(((separator[22]).surface)->format, 50, 50, 50));
+              (separator[22]).position.x = (separator[17]).position.x + 2;
+              (separator[22]).position.y = (separator[17]).position.y + 2;
+              SDL_BlitSurface((separator[22]).surface, NULL, screen, &((separator[22]).position));
+              text[26] = TTF_RenderText_Blended(police3, arrivalname, green);
+              SDL_BlitSurface(text[26], NULL, screen, &positionnamearriv);
+            }
+            break;
+        }
+        SDL_Flip(screen);       // Update the whole SDL screen
+        data.control = 0;       // Data.control is reset to 0
+      }
+    }
     else if (data.code > 5 && data.code < 10) {      // Else if an algorithm box has been checked
       switch(data.code) {       // To determine which box has been checked
         case 6:           // Astar
@@ -578,12 +734,13 @@ int dataForm(char* filename, char* departurename, char* arrivalname, char* depar
       updateCasesHeur(imgcase, screen, (data.code)-6);
     }
   }
+
   for (i = 0; i < 27; i++)      // Free memory allocated to text SDL surfaces
     SDL_FreeSurface(text[i]);
   for (i = 0; i < 11; i++)        // Free memory allocated to image SDL surfaces
     SDL_FreeSurface(imgcase[i].surface);
-  for (i = 0; i < 21; i++)          // Free memory allocated to separator SDL surfaces
-    SDL_FreeSurface(separator[i]);
+  for (i = 0; i < 23; i++)          // Free memory allocated to separator SDL surfaces
+    SDL_FreeSurface(separator[i].surface);
   SDL_FreeSurface(screen);          // Free memory allocated to the main SDL screen
   TTF_CloseFont(police1);         // Close TTF police
   TTF_CloseFont(police2);         // Close TTF police

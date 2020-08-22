@@ -31,7 +31,7 @@ void printPath(listindex_t l, graph_t graph) {
 // Distances given in kilometers
 // 6371 is the average radius of the Earth
 double greatCircle(double lat1, double long1, double lat2, double long2) {
-  return (6371*acos(cos(lat1)*cos(lat2)*cos(long2-long1) + sin(lat1)*sin(lat2)));
+  return (RT*acos(cos(lat1)*cos(lat2)*cos(long2-long1) + sin(lat1)*sin(lat2)));
 }
 
 
@@ -39,8 +39,10 @@ double greatCircle(double lat1, double long1, double lat2, double long2) {
 // Return the Manhattan distance between two points
 // Distance given in kilometers
 double manhattan(double lat1, double long1, double lat2, double long2) {
-  puts("Not implemented yet !");
-  return (0);
+  double a, b;
+  a = sin(abs(lat2-lat1)/2) * sin(abs(lat2-lat1)/2);
+  b = sin(abs(long2-long1)/2) * sin(abs(long2-long1)/2);
+  return (2*RT*( abs(atan2(sqrt(a), sqrt(1-a))) + abs(atan2(sqrt(b), sqrt(1-b))) ));
 }
 
 
@@ -48,8 +50,7 @@ double manhattan(double lat1, double long1, double lat2, double long2) {
 // Return the Euclidean distance between two points
 // Distance given in kilometers
 double euclidean(double lat1, double long1, double lat2, double long2) {
-  puts("Not implemented yet !");
-  return (0);
+  return (RT*acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(long1-long2)));
 }
 
 

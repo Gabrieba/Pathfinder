@@ -194,12 +194,12 @@ void stringStandardise(char* string) {
 
 
 // Check if user data are correct
-//Return 0 if successful, 0 otherwise
+//Return 0 if successful, 1 otherwise
 int dataCheck(graph_t graph, char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, int* dep, int* arriv) {
   int bit = 0; int i;
   if (departureindex[0] != '\0')        // If the user has given a departure index
     sscanf(departureindex, "%d", dep);     // get the departure index
-  else {                                            // If the user has given a departure name instead
+  if (departurename[0] != '\0') {                      // If the user has given a departure name
     for (i = 0; i < graph.size_vertex; i++) {         // Go through the nodes list to check if this node name exists
       if (strcmp(graph.data[i].name, departurename) == 0) {
         bit = 1;        // Bit = 1 means that the given node name exists
@@ -217,7 +217,7 @@ int dataCheck(graph_t graph, char* filename, char* departurename, char* arrivaln
   bit = 0;
   if (arrivalindex[0] != '\0')          // If the user has given an arrival index
     sscanf(arrivalindex, "%d", arriv);     // Get the arrival index
-  else {                                        // If the user has given an arrival name instead
+  if (arrivalname[0] != '\0') {                              // If the user has given an arrival name
     for (i = 0; i < graph.size_vertex; i++) {       // Go through the nodes list to check if this node name exists
       if (strcmp(graph.data[i].name, arrivalname) == 0) {
         bit = 1;              // Bit = 1 means that the given node name exists
@@ -243,7 +243,7 @@ int dataCheck(graph_t graph, char* filename, char* departurename, char* arrivaln
 
 
 // Check if arguments are correct, and return 0
-// Return 0 if an error occured : not enough arguments, too much arguments, wrong file name, wrong file extension, incorrect argument type
+// Return 1 if an error occured : not enough arguments, too much arguments, wrong file name, wrong file extension, incorrect argument type
 int dataPreCheck(char* filename, char* departurename, char* arrivalname, char* departureindex, char* arrivalindex, void (*algo)(graph_t graph, int dep, int arriv, double (*heuristic)(double nx, double ny, double lat, double longi)), double (*heuristic)(double nx, double ny, double lat, double longi)) {
   int i;
   const char* separator = ".";      // Separator to isolate the file extension
